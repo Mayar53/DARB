@@ -1,0 +1,55 @@
+# Root .gitignore — git is initialized here (covers backend/ + frontend/).
+# Each folder also has its own .gitignore; these patterns are a safety net.
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.log
+
+# Local agent/tooling (kept on disk, not published)
+.commandcode/
+backend/.commandcode/
+frontend/.commandcode/
+backend/.agent/
+frontend/.agent/
+frontend/eslint_check3.txt
+frontend/tsc_check3.txt
+
+# Static design mockup (kept locally as reference; not part of the deployed app)
+/draft.css
+/draft.html
+/draft.js
+
+# Node / Next.js (frontend)
+**/node_modules/
+**/.next/
+**/out/
+**/build/
+**/coverage/
+**/.pnp.*
+*.tsbuildinfo
+**/next-env.d.ts
+
+# Python / Django (backend)
+**/__pycache__/
+*.py[oc]
+**/.venv/
+**/*.egg-info/
+**/.pytest_cache/
+**/.ruff_cache/
+**/db.sqlite3
+**/db.sqlite3-journal
+backend/staticfiles/
+backend/media/
+
+# Env files — keep the committed examples, ignore real secrets
+**/.env
+**/.env.*
+!**/.env.example
+
+# Deploy
+.vercel

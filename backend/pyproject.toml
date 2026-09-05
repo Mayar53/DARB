@@ -1,0 +1,46 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Karkh backend template — Django + django-ninja, hexagonal (ports & adapters)"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "argon2-cffi>=25.1.0",
+    "boto3>=1.43.32",
+    "django>=6.0.6",
+    "django-cors-headers>=4.9.0",
+    "django-environ>=0.13.0",
+    "django-ninja>=1.6.2",
+    "django-redis>=7.0.0",
+    "django-storages[s3]>=1.14.6",
+    "django-unfold>=0.97.2",
+    "email-validator>=2.3.0",
+    "gunicorn>=26.0.0",
+    "psycopg[binary]>=3.3.4",
+    "pyjwt>=2.13.0",
+    "whitenoise>=6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.0",
+    "pytest-django>=4.12.0",
+    "ruff>=0.15.17",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["**/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ"]
+ignore = ["B008"]  # ninja/pydantic use defaults in function signatures
+
+[tool.ruff.lint.isort]
+known-first-party = ["src", "config"]
