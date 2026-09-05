@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DARB|درب</title>
+    <link rel="shortcut icon" href="favicon-16.png" type="image/png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="favicondarb.png">
+    <link rel="apple-touch-icon" href="favicondarb.png">
+    <link rel="stylesheet" href="draft.css?v=20260829h">
+</head>
+<body>
+
+    <header>
+        <div class="nav">
+            <a href="#" class="logo"><img src="favicondarb.png" alt="darb logo" class="logo-mark logo-img"> DARB|درب</a>
+            <div class="nav-search" id="navSearchWrap">
+                <span class="nav-search-icon">⌕</span>
+                <input type="text" id="navSearchInput" class="nav-search-input" data-i18n-ph="search.navPlaceholder" placeholder="Search…">
+            </div>
+            <nav class="navb" id="navb">
+                <a href="#about" data-i18n="nav.about">about</a>
+                <a href="#contact" data-i18n="nav.contact">contact</a>
+                <div class="nav-actions" id="navActions"></div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- In-app deadline reminder — shown when a saved opportunity is closing soon -->
+    <div class="reminder-bar" id="reminderBar" hidden></div>
+
+    <!-- First-visit onboarding tooltip -->
+    <div class="onboarding" id="onboarding" hidden>
+        <button class="onboarding-close" id="onboardingClose" aria-label="Close">&times;</button>
+        <p data-i18n="onboarding.text">Browse without an account, or sign up to save opportunities, track what you've applied to, and share your experiences.</p>
+    </div>
+
+    <main>
+        <div class="main">
+            <p class="hero-kicker" data-i18n="hero.tagline">BROWSE YOUR PATH</p>
+            <h1>DARB|درب</h1>
+            <p class="hero-sub" data-i18n="hero.sub">Your future starts now</p>
+
+            <div class="hero-chips">
+                <span class="hero-chip">⚡ <span data-i18n="hero.chipFast">Deadline alerts</span></span>
+                <span class="hero-chip">🎯 <span data-i18n="hero.chipPersonal">Made for you</span></span>
+                <span class="hero-chip">🏆 <span data-i18n="hero.chipRewards">Points & badges</span></span>
+            </div>
+
+            <div class="searchbar">
+                <input type="text" id="searchInput" data-i18n-ph="search.placeholder" placeholder="Search for opportunities, programs, and more…">
+                <button class="searchbar" id="searchBtn" data-i18n="search.btn">Search</button>
+            </div>
+
+            <div class="search-meta">
+                <span class="result-count" id="resultCount"></span>
+                <button class="surprise-btn" id="surpriseBtn2" data-i18n="view.surprise">🎲 Surprise me</button>
+            </div>
+
+            <section class="filter">
+                <select id="modeFilter">
+                    <option value="all" data-i18n="filter.modeAll">all modes</option>
+                    <option value="online" data-i18n="filter.modeOnline">online</option>
+                    <option value="in-person" data-i18n="filter.modeInPerson">in-person</option>
+                    <option value="hybrid" data-i18n="filter.modeHybrid">hybrid</option>
+                </select>
+                <select id="fundingFilter">
+                    <option value="all" data-i18n="filter.fundingAll">all</option>
+                    <option value="charged" data-i18n="filter.fundingCharged">charged</option>
+                    <option value="free" data-i18n="filter.fundingFree">free</option>
+                </select>
+                <select id="ageFilter">
+                    <option value="all" data-i18n="filter.ageAll">all ages</option>
+                    <option value="13-15">13-15</option>
+                    <option value="15-18">15-18</option>
+                    <option value="+18">+18</option>
+                </select>
+                <select id="certFilter">
+                    <option value="all" data-i18n="filter.certAll">certificate: all</option>
+                    <option value="yes" data-i18n="filter.certYes">has certificate</option>
+                    <option value="no" data-i18n="filter.certNo">no certificate</option>
+                </select>
+                <select id="locationFilter">
+                    <option value="all" data-i18n="filter.locationAll">all locations</option>
+                </select>
+                <select id="durationFilter">
+                    <option value="all" data-i18n="filter.durationAll">all durations</option>
+                    <option value="short" data-i18n="filter.durationShort">short (1 week or less)</option>
+                    <option value="medium" data-i18n="filter.durationMedium">medium (up to 1 month)</option>
+                    <option value="long" data-i18n="filter.durationLong">long (over 1 month)</option>
+                </select>
+                <select id="sortFilter">
+                    <option value="newest" data-i18n="filter.sortNewest">sort: newest</option>
+                    <option value="deadline" data-i18n="filter.sortDeadline">sort: deadline soonest</option>
+                </select>
+            </section>
+
+            <!-- Browse / Saved / Applied toggle. Saved + Applied need a login. -->
+            <div class="view-toggle" id="viewToggle">
+                <button class="view-btn active" data-view="browse" data-i18n="view.browse">Browse</button>
+                <button class="view-btn" data-view="saved" data-i18n="view.saved">Saved</button>
+                <button class="view-btn" data-view="applied" data-i18n="view.applied">Applied</button>
+                <button class="view-btn" id="surpriseBtn" data-i18n="view.surprise">Surprise me</button>
+            </div>
+
+            <!-- Profile bar: avatar, points, badges (logged in) -->
+            <div class="profile-bar" id="profileBar" hidden>
+                <button class="avatar-btn" id="avatarBtn" title="Pick your avatar">🙂</button>
+                <div class="profile-info">
+                    <span class="profile-name" id="profileName"></span>
+                    <span class="profile-points" id="profilePoints"></span>
+                </div>
+                <div class="badge-row" id="badgeRow"></div>
+            </div>
+        </div>
+
+        <!-- Personalized recommendation rows -->
+        <section class="recs" id="recsSection" hidden>
+            <div class="recs-row">
+                <h2 class="section-title" id="recsMadeTitle" data-i18n="recs.madeForYou">Made for you</h2>
+                <div class="recs-scroll" id="recsMade"></div>
+            </div>
+            <div class="recs-row">
+                <h2 class="section-title" id="recsClosingTitle" data-i18n="recs.closingThisWeek">Closing this week</h2>
+                <div class="recs-scroll" id="recsClosing"></div>
+            </div>
+        </section>
+
+        <section class="categories" id="about">
+            <div class="section-label" data-i18n="browse.label">Browse</div>
+            <h2 class="section-title" data-i18n="browse.title">Opportunity categories</h2>
+            <div class="pill-row" id="categoryPills"></div>
+            <div class="section-label" data-i18n="browse.fieldLabel">Field</div>
+            <div class="pill-row" id="fieldPills"></div>
+        </section>
+
+        <div class="grid" id="cardGrid"></div>
+        <div class="loading-state" id="loadingState"><div class="spinner"></div></div>
+        <div class="empty-state" id="emptyState">
+            <p data-i18n="empty.text">No matches yet — but there are lots of opportunities out there. Try clearing a filter or searching a different keyword.</p>
+            <button class="btn btn-outline" id="clearFiltersBtn" data-i18n="empty.clear">Clear filters</button>
+        </div>
+    </main>
+
+    <!-- ============ ROLE DASHBOARD (full-screen; Admin / Owner) ============ -->
+    <div class="dash" id="dashboardView" hidden>
+        <aside class="dash-side" id="dashSide">
+            <div class="dash-brand">
+                <button class="dash-back" id="dashBack" title="Back to site">←</button>
+                <span class="dash-brand-name">DARB|درب</span>
+            </div>
+            <nav class="dash-nav" id="dashNav"></nav>
+            <div class="dash-side-foot" id="dashSideFoot"></div>
+        </aside>
+        <div class="dash-main">
+            <header class="dash-head">
+                <h2 class="dash-title" id="dashTitle">Dashboard</h2>
+                <span class="dash-role-badge" id="dashRoleBadge"></span>
+            </header>
+            <div class="dash-content" id="dashContent"></div>
+        </div>
+    </div>
+
+    <footer id="contact">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <div class="footer-logo"><img src="favicondarb.png" alt="" class="logo-img"> DARB|درب</div>
+                <p data-i18n="footer.tagline">Every opportunity, one place.</p>
+                <div class="footer-links">
+                    <button class="footer-link" id="langToggle" data-i18n="lang.toggle">العربية</button>
+                    <button class="footer-link" id="themeToggle" data-i18n="theme.dark">Dark mode</button>
+                    <button class="footer-link" id="privacyBtn" data-i18n="footer.privacy">Privacy &amp; terms</button>
+                </div>
+            </div>
+            <div class="footer-col">
+                <h4 class="footer-heading" data-i18n="footer.categories">Categories</h4>
+                <ul class="footer-cat-list" id="footerCats"></ul>
+            </div>
+            <div class="footer-col footer-about">
+                <h4 class="footer-heading" data-i18n="footer.aboutTitle">About DARB</h4>
+                <p class="footer-about-text" data-i18n="footer.aboutText">A volunteer project gathering every Iraqi youth opportunity in one place.</p>
+            </div>
+            <p class="footer-rights">© <span id="year"></span> DARB|درب. <span data-i18n="footer.rights">All rights reserved.</span></p>
+        </div>
+    </footer>
+
+    <!-- ============ AUTH MODAL (login / register) ============ -->
+    <div class="modal" id="authModal" hidden>
+        <div class="modal-card">
+            <button class="modal-close" data-close="authModal" aria-label="Close">&times;</button>
+            <h2 id="authTitle" data-i18n="auth.loginTitle">Login</h2>
+            <p class="modal-sub" id="authSub" data-i18n="auth.loginSub">Welcome back — log in to save and share.</p>
+
+            <div class="tab-row">
+                <button class="tab active" data-tab="login" data-i18n="auth.loginTab">Login</button>
+                <button class="tab" data-tab="register" data-i18n="auth.registerTab">Register</button>
+                <button class="tab" data-tab="adminApply" data-i18n="auth.adminApplyTab">Admin</button>
+            </div>
+
+            <form id="loginForm" hidden>
+                <label data-i18n="auth.email">Email
+                    <input type="email" id="loginEmail" required placeholder="you@example.com">
+                </label>
+                <label data-i18n="auth.password">Password
+                    <input type="password" id="loginPassword" required>
+                </label>
+                <button class="btn btn-primary" type="submit" data-i18n="auth.loginBtn">Log in</button>
+            </form>
+
+            <form id="registerForm" hidden>
+                <label data-i18n="auth.name">Full name
+                    <input type="text" id="regName" required placeholder="Your name">
+                </label>
+                <label data-i18n="auth.nickname">Nickname (shown publicly)
+                    <input type="text" id="regNickname" placeholder="e.g. Sara">
+                </label>
+                <label data-i18n="auth.email">Email
+                    <input type="email" id="regEmail" required placeholder="you@example.com">
+                </label>
+                <label data-i18n="auth.passwordMin">Password (min 8 characters)
+                    <input type="password" id="regPassword" required minlength="8">
+                </label>
+                <button class="btn btn-primary" type="submit" data-i18n="auth.registerBtn">Create account</button>
+            </form>
+
+            <!-- ADMIN SECTION: apply (no account) / register (post-approval) / login -->
+            <div id="adminSection" hidden>
+                <div class="admin-subtabs">
+                    <button class="tab active" data-atab="apply" data-i18n="auth.adminApplyTab2">Apply</button>
+                    <button class="tab" data-atab="register" data-i18n="auth.adminRegisterTab">Register</button>
+                    <button class="tab" data-atab="login" data-i18n="auth.adminLoginTab">Login</button>
+                </div>
+
+                <form id="adminApplyForm" hidden>
+                    <p class="modal-sub" data-i18n="auth.adminApplySub">Apply for admin access — an existing admin will review your application. No account is created until it is approved.</p>
+                    <label data-i18n="auth.name">Full name
+                        <input type="text" id="aaName" required placeholder="Your name">
+                    </label>
+                    <label data-i18n="auth.email">Email
+                        <input type="email" id="aaEmail" required placeholder="you@example.com">
+                    </label>
+                    <label data-i18n="auth.organization">Organization / NGO
+                        <input type="text" id="aaOrganization" placeholder="e.g. Green Iraq">
+                    </label>
+                    <label data-i18n="auth.website">Website
+                        <input type="url" id="aaWebsite" placeholder="https://…">
+                    </label>
+                    <label data-i18n="auth.position">Position / role
+                        <input type="text" id="aaPosition" placeholder="e.g. Coordinator">
+                    </label>
+                    <label data-i18n="auth.reason">Why do you need admin access?
+                        <textarea id="aaReason" rows="3" required placeholder="Tell us about your work"></textarea>
+                    </label>
+                    <button class="btn btn-primary" type="submit" data-i18n="auth.adminApplyBtn">Apply for admin</button>
+                    <p class="modal-hint" id="aaHint" hidden></p>
+                </form>
+
+                <form id="adminRegisterForm" hidden>
+                    <p class="modal-sub" data-i18n="auth.adminRegisterSub">Your application must be approved first. Once approved, create your admin account here.</p>
+                    <label data-i18n="auth.name">Full name
+                        <input type="text" id="arName" required placeholder="Your name">
+                    </label>
+                    <label data-i18n="auth.email">Email
+                        <input type="email" id="arEmail" required placeholder="you@example.com">
+                    </label>
+                    <label data-i18n="auth.passwordMin">Password (min 8 characters)
+                        <input type="password" id="arPassword" required minlength="8">
+                    </label>
+                    <button class="btn btn-primary" type="submit" data-i18n="auth.adminRegisterBtn">Create admin account</button>
+                    <p class="modal-hint" id="arHint" hidden></p>
+                </form>
+
+                <form id="adminLoginForm" hidden>
+                    <p class="modal-sub" data-i18n="auth.adminLoginSub">Log in with your approved admin account.</p>
+                    <label data-i18n="auth.email">Email
+                        <input type="email" id="alEmail" required placeholder="you@example.com">
+                    </label>
+                    <label data-i18n="auth.password">Password
+                        <input type="password" id="alPassword" required>
+                    </label>
+                    <button class="btn btn-primary" type="submit" data-i18n="auth.adminLoginBtn">Log in as admin</button>
+                    <p class="modal-hint" id="alHint" hidden></p>
+                </form>
+            </div>
+
+            <p class="modal-hint" id="authHint" data-i18n="auth.hint">Admin accounts require an approved application.</p>
+        </div>
+    </div>
+
+    <!-- ============ DETAIL MODAL (full info + stories) ============ -->
+    <div class="modal" id="detailModal" hidden>
+        <div class="modal-card modal-wide">
+            <button class="modal-close" data-close="detailModal" aria-label="Close">&times;</button>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <!-- ============ PROFILE MODAL (logged in) ============ -->
+    <div class="modal" id="profileModal" hidden>
+        <div class="modal-card">
+            <button class="modal-close" data-close="profileModal" aria-label="Close">&times;</button>
+            <h2 data-i18n="profile.title">Your profile</h2>
+            <p class="modal-sub" data-i18n="profile.emailLabel">Email</p>
+            <div class="profile-view" id="profileView"></div>
+        </div>
+    </div>
+
+    <!-- ============ AVATAR PICKER MODAL ============ -->
+    <div class="modal" id="avatarModal" hidden>
+        <div class="modal-card">
+            <button class="modal-close" data-close="avatarModal" aria-label="Close">&times;</button>
+            <h2 data-i18n="profile.avatar">Your avatar</h2>
+            <p class="modal-sub" data-i18n="profile.title">Your profile</p>
+            <div class="avatar-grid" id="avatarGrid"></div>
+            <div class="form-actions">
+                <button class="btn btn-primary" id="avatarSave" data-i18n="auth.loginBtn" style="display:none">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ PRIVACY / TERMS MODAL (plain language) ============ -->
+    <div class="modal" id="privacyModal" hidden>
+        <div class="modal-card modal-wide">
+            <button class="modal-close" data-close="privacyModal" aria-label="Close">&times;</button>
+            <h2 data-i18n="privacy.title">Privacy &amp; terms — in plain language</h2>
+            <div class="privacy-body" id="privacyBody"></div>
+        </div>
+    </div>
+
+    <!-- ============ ADMIN MODAL (add / edit / delete / CSV / analytics / flags) ============ -->
+    <div class="modal" id="adminModal" hidden>
+        <div class="modal-card modal-wide">
+            <button class="modal-close" data-close="adminModal" aria-label="Close">&times;</button>
+            <h2 data-i18n="admin.title">Admin panel</h2>
+            <p class="modal-sub" data-i18n="admin.sub">Add, edit or delete opportunities — they appear on the page instantly.</p>
+
+            <div class="admin-tabs">
+                <button class="admin-tab active" data-atab="dashboard" data-i18n="admin.tabDashboard">Dashboard</button>
+                <button class="admin-tab" data-atab="manage" data-i18n="admin.tabManage">Add opportunity</button>
+                <button class="admin-tab" data-atab="myopps" data-i18n="admin.tabMyOpps">My opportunities</button>
+                <button class="admin-tab" data-atab="applications" data-i18n="admin.tabApplications">Applications</button>
+                <button class="admin-tab" data-atab="users" data-i18n="admin.tabUsers">Users</button>
+                <button class="admin-tab" data-atab="admins" data-i18n="admin.tabAdmins">Admins</button>
+                <button class="admin-tab" data-atab="organizations" data-i18n="admin.tabOrgs">Organizations</button>
+                <button class="admin-tab" data-atab="import" data-i18n="admin.tabImport">CSV import</button>
+                <button class="admin-tab" data-atab="analytics" data-i18n="admin.tabAnalytics">Analytics</button>
+                <button class="admin-tab" data-atab="flags" data-i18n="admin.tabFlags">Flags</button>
+            </div>
+
+            <!-- DASHBOARD: stats + welcome -->
+            <div class="admin-pane" data-apane="dashboard">
+                <div id="dashboardContent"></div>
+            </div>
+
+            <!-- MANAGE: create / edit form + list -->
+            <div class="admin-pane" data-apane="manage" hidden>
+                <form id="adminForm" class="admin-form">
+                    <input type="hidden" id="afId">
+                    <label data-i18n="admin.form.title">Title
+                        <input type="text" id="afTitle" required>
+                    </label>
+                    <label data-i18n="admin.form.desc">Description
+                        <textarea id="afDesc" rows="3" required></textarea>
+                    </label>
+                    <div class="form-row">
+                        <label data-i18n="admin.form.category">Category
+                            <select id="afCategory"></select>
+                        </label>
+                        <label data-i18n="admin.form.location">Location
+                            <input type="text" id="afLocation" placeholder="Baghdad, or Online">
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label data-i18n="admin.form.mode">Mode
+                            <select id="afMode">
+                                <option value="online" data-i18n="filter.modeOnline">online</option>
+                                <option value="in-person" data-i18n="filter.modeInPerson">in-person</option>
+                                <option value="hybrid" data-i18n="filter.modeHybrid">hybrid</option>
+                            </select>
+                        </label>
+                        <label data-i18n="admin.form.duration">Duration
+                            <input type="text" id="afDuration" placeholder="e.g. 2 months">
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label data-i18n="admin.form.funding">Funding
+                            <select id="afFunding">
+                                <option value="free" data-i18n="filter.fundingFree">free</option>
+                                <option value="paid" data-i18n="filter.fundingCharged">paid</option>
+                            </select>
+                        </label>
+                        <label data-i18n="admin.form.age">Age group
+                            <select id="afAge">
+                                <option value="all" data-i18n="filter.ageAll">all ages</option>
+                                <option value="13-15">13-15</option>
+                                <option value="15-18">15-18</option>
+                                <option value="+18">+18</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <label data-i18n="admin.form.deadline">Deadline
+                            <input type="date" id="afDeadline">
+                        </label>
+                        <label data-i18n="admin.form.link">Apply link
+                            <input type="url" id="afLink" required placeholder="https://…">
+                        </label>
+                    </div>
+                    <label class="checkbox-row">
+                        <input type="checkbox" id="afCertificate">
+                        <span data-i18n="admin.form.certificate">Offers a certificate</span>
+                    </label>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" type="submit" id="afSubmit" data-i18n="admin.form.add">Add opportunity</button>
+                        <button class="btn btn-outline" type="button" id="afCancel" hidden data-i18n="admin.form.cancel">Cancel edit</button>
+                    </div>
+                </form>
+
+                <div class="admin-list" id="adminList"></div>
+            </div>
+
+            <!-- IMPORT: bulk CSV upload -->
+            <div class="admin-pane" data-apane="import" hidden>
+                <p class="modal-sub" data-i18n="admin.import.hint">Paste rows with headers: title, description, category, location, mode, duration, funding (paid/free), age (13-15/15-18/+18/all), deadline (YYYY-MM-DD), link, certificate (yes/no). One row per opportunity.</p>
+                <textarea id="csvInput" rows="8" placeholder="title,description,category,location,mode,duration,funding,age,deadline,link,certificate"></textarea>
+                <div class="form-actions">
+                    <button class="btn btn-primary" id="csvImportBtn" data-i18n="admin.import.btn">Import CSV</button>
+                    <button class="btn btn-outline" id="csvExportBtn" data-i18n="admin.export.btn">Export CSV</button>
+                </div>
+                <p class="modal-hint" id="csvResult"></p>
+            </div>
+
+            <!-- ANALYTICS -->
+            <div class="admin-pane" data-apane="analytics" hidden>
+                <div id="analyticsContent"></div>
+            </div>
+
+            <!-- FLAGS: reported stories -->
+            <div class="admin-pane" data-apane="flags" hidden>
+                <div id="flagsContent"></div>
+            </div>
+
+            <!-- MY OPPORTUNITIES: owner-scoped management -->
+            <div class="admin-pane" data-apane="myopps" hidden>
+                <div id="myOppsContent"></div>
+            </div>
+
+            <!-- APPLICATIONS: pending admin applications -->
+            <div class="admin-pane" data-apane="applications" hidden>
+                <div id="applicationsContent"></div>
+            </div>
+
+            <!-- USERS: all registered personal users (OWNER) -->
+            <div class="admin-pane" data-apane="users" hidden>
+                <div id="usersContent"></div>
+            </div>
+
+            <!-- ADMINS: existing admin accounts (OWNER) -->
+            <div class="admin-pane" data-apane="admins" hidden>
+                <div class="admin-list" id="adminUsersList"></div>
+            </div>
+
+            <!-- ORGANIZATIONS: NGOs (OWNER) -->
+            <div class="admin-pane" data-apane="organizations" hidden>
+                <div id="organizationsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- small feedback popup -->
+    <div class="toast" id="toast" hidden></div>
+
+    <script src="draft.js?v=20260829h"></script>
+</body>
+</html>
