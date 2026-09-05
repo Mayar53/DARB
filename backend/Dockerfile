@@ -1,4 +1,6 @@
 # syntax=docker/dockerfile:1
+# Built from the REPO ROOT (Render's default context). The backend lives in
+# backend/; all COPY paths below are relative to the repo root.
 FROM python:3.13-slim AS base
 
 ENV PYTHONUNBUFFERED=1 \
@@ -13,11 +15,11 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Install dependencies first (better layer caching).
-COPY pyproject.toml uv.lock ./
+COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-# App source
-COPY . .
+# App source (backend/ contains manage.py, config/, src/, entrypoint.sh).
+COPY backend/ ./
 RUN uv sync --frozen --no-dev && chmod +x entrypoint.sh
 
 # Run as non-root
