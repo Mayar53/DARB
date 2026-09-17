@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Banknote, Clock, MapPin, MessageCircle } from "lucide-react";
+import { ArrowUpRight, Banknote, Clock, MapPin, MessageCircle, Users } from "lucide-react";
 import Link from "next/link";
 
 import { AppliedButton } from "@/features/applied";
@@ -32,6 +32,8 @@ export function OpportunityCard({
   const loc: "ar" | "en" = locale === "en" ? "en" : "ar";
   const title = localizedField(opportunity, "title", loc);
   const description = localizedField(opportunity, "description", loc);
+  // Show the age chip only when there is an actual restriction (not "all").
+  const ageLabel = !opportunity.age || opportunity.age === "all" ? "" : opportunity.age;
 
   return (
     <article
@@ -64,8 +66,14 @@ export function OpportunityCard({
           {title}
         </h3>
 
-        {/* Field tags — consistent area on every card (reserves space when empty). */}
+        {/* Age + field tags — consistent area on every card (reserves space when empty). */}
         <div className="flex min-h-[1.625rem] flex-wrap items-center gap-1.5">
+          {ageLabel && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+              <Users className="size-3" />
+              {ageLabel}
+            </span>
+          )}
           {opportunity.fields && opportunity.fields.length > 0 ? (
             opportunity.fields.map((key) => {
               const field = fieldInfo(key);
@@ -80,7 +88,7 @@ export function OpportunityCard({
               );
             })
           ) : (
-            <span className="hidden" aria-hidden />
+            !ageLabel && <span className="hidden" aria-hidden />
           )}
         </div>
 
