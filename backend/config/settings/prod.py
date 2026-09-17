@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import warnings
+
 from .base import *  # noqa: F401,F403
-from .base import MIDDLEWARE, env  # noqa: F401
+from .base import BASE_DIR, MIDDLEWARE, env  # noqa: F401
 
 DEBUG = False
 
@@ -25,10 +27,25 @@ if _render_host and f"https://{_render_host}" not in _origins:
     _origins.append(f"https://{_render_host}")
 CSRF_TRUSTED_ORIGINS = _origins
 
-# --- Database: Postgres -----------------------------------------------------
-DATABASES = {"default": env.db("DATABASE_URL")}
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
-DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+# --- Database: Postgres (DATABASE_URL) with a SQLite fallback ---------------
+# Production expects DATABASE_URL. If it is missing we fall back to a local
+# SQLite file so the service still boots (useful on free hosts before a database
+# is attached). WARNING: on an ephemeral filesystem (e.g. Render free) that file
+# is wiped on every deploy — set DATABASE_URL for real, persistent data.
+if env("DATABASE_URL", default=""):
+    DATABASES = {"default": env.db("DATABASE_URL")}
+    DATABASES["default"]["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
+    DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+else:
+    warnings.warn(
+        "DATABASE_URL is not set — falling back to SQLite. Data will be LOST on "
+        "redeploy. Attach a Postgres database and set DATABASE_URL.",
+        RuntimeWarning,
+        stacklevel=2,
+    )
+    DATABASES = {
+        "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": BASE_DIR / "db.sqlite3"}
+    }
 
 # --- Cache: Redis (optional) ------------------------------------------------
 # When REDIS_URL is set we use Redis; otherwise fall back to the local-memory
