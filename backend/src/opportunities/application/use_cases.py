@@ -80,6 +80,7 @@ class OpportunityCommand:
     organization: str | int | None = None
     age: str = "all"
     certificate: bool = False
+    verified: bool = False
     fields: list[str] = field(default_factory=list)
     # Optional per-language overrides (never required; base title/description
     # doubles as the fallback for both locales).
@@ -104,6 +105,7 @@ class OpportunityUpdate:
     organization: str | int | None = None
     age: str | None = None
     certificate: bool | None = None
+    verified: bool | None = None
     fields: list[str] | None = None
     title_ar: str | None = None
     title_en: str | None = None
@@ -218,6 +220,7 @@ class CreateOpportunity(UseCase[OpportunityCommand, Opportunity]):
             organization=data.organization,
             age=data.age,
             certificate=data.certificate,
+            verified=data.verified,
             fields=data.fields,
         )
 
@@ -295,6 +298,7 @@ class UpdateOpportunity(UseCase[tuple[int, OpportunityUpdate], Opportunity]):
                 "organization": update.organization,
                 "age": update.age,
                 "certificate": update.certificate,
+                "verified": update.verified,
                 "fields": update.fields,
             }.items()
             if value is not None
@@ -335,6 +339,7 @@ class UpdateOpportunity(UseCase[tuple[int, OpportunityUpdate], Opportunity]):
             "organization": opportunity.organization,
             "age": opportunity.age,
             "certificate": opportunity.certificate,
+            "verified": opportunity.verified,
             "fields": opportunity.fields,
         }
         merged.update(changes)

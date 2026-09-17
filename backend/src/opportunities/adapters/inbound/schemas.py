@@ -75,6 +75,8 @@ class OpportunityIn(Schema):
     organization_website: str = Field(default="", max_length=500)
     age: Age = "all"
     certificate: bool = False
+    # Staff-set: marks the opportunity as coming from a trusted source.
+    verified: bool = False
     fields: list[str] = []
 
     @field_validator("apply_url", mode="before")
@@ -113,6 +115,7 @@ class OpportunityUpdateIn(Schema):
     organization_website: str | None = Field(default=None, max_length=500)
     age: Age | None = None
     certificate: bool | None = None
+    verified: bool | None = None
     fields: list[str] | None = None
 
     @field_validator("apply_url", mode="before")
@@ -156,6 +159,7 @@ class OpportunityOut(Schema):
     organization_website: str = ""
     age: str
     certificate: bool
+    verified: bool = False
     fields: list[str] = []
     apply_clicks: int = 0
     views: int = 0

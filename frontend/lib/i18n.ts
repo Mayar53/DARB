@@ -141,6 +141,7 @@ const en = {
   "home.certAll": "All",
   "home.certYes": "Has certificate",
   "home.certNo": "No certificate",
+  "home.verified": "Verified",
   "home.locationAll": "All locations",
   "home.durationAll": "All durations",
   "home.durationShort": "Short (≤ 1 week)",
@@ -408,6 +409,7 @@ const en = {
   "admin.form.ngoWebsite": "NGO website",
   "admin.form.ngoWebsitePh": "https://ngo.example.com",
   "admin.form.active": "Visible on home page",
+  "admin.form.verified": "Verified source",
 
   // ---- Owner dashboard ----
   "admin.dashboardTitle": "Owner dashboard",
@@ -701,6 +703,7 @@ const ar: Record<MessageKey, string> = {
   "home.certAll": "الكل",
   "home.certYes": "يوجد شهادة",
   "home.certNo": "بدون شهادة",
+  "home.verified": "موثّق",
   "home.locationAll": "كل المواقع",
   "home.durationAll": "كل المدد",
   "home.durationShort": "قصيرة (أسبوع أو أقل)",
@@ -968,6 +971,7 @@ const ar: Record<MessageKey, string> = {
   "admin.form.ngoWebsite": "موقع الجهة",
   "admin.form.ngoWebsitePh": "https://ngo.example.com",
   "admin.form.active": "ظاهرة في الصفحة الرئيسية",
+  "admin.form.verified": "مصدر موثّق",
 
   // ---- لوحة تحكم المالك ----
   "admin.dashboardTitle": "لوحة تحكم المالك",

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from django.db import models
 
 from src.opportunities.adapters.outbound.orm_models import OpportunityField, OpportunityModel
@@ -19,6 +21,11 @@ class DjangoOpportunityRepository(OpportunityRepository):
         qs = self._queryset().all()
         if not include_inactive:
             qs = qs.filter(status="published")
+            # Public browse: also hide opportunities whose deadline has passed,
+            # so the site never lists a dead opportunity. Staff views
+            # (include_inactive=True) still see them under the "past" bucket.
+            today = date.today()
+            qs = qs.filter(models.Q(deadline__isnull=True) | models.Q(deadline__gte=today))
         return [self._to_entity(row) for row in qs]
 
     def list_by_owner(self, owner_id: int) -> list[Opportunity]:
@@ -48,6 +55,7 @@ class DjangoOpportunityRepository(OpportunityRepository):
         organization: int | None = None,
         age: str = "all",
         certificate: bool = False,
+        verified: bool = False,
         fields: list[str] | None = None,
         title_ar: str | None = None,
         title_en: str | None = None,
@@ -75,6 +83,7 @@ class DjangoOpportunityRepository(OpportunityRepository):
             organization_id=organization,
             age=age,
             certificate=certificate,
+            verified=verified,
         )
         if fields:
             row.fields.set(OpportunityField.objects.filter(key__in=fields))
@@ -165,6 +174,7 @@ class DjangoOpportunityRepository(OpportunityRepository):
             organization_website=row.organization.website if row.organization else "",
             age=row.age,
             certificate=row.certificate,
+            verified=row.verified,
             apply_clicks=row.apply_clicks,
             views=row.views,
             fields=[f.key for f in row.fields.all()],

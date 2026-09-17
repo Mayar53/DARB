@@ -30,6 +30,7 @@ export interface CreateOpportunityInput {
   status?: string;
   age: string;
   certificate: boolean;
+  verified?: boolean;
   fields: string[];
 }
 

@@ -116,6 +116,8 @@ class OpportunityModel(models.Model):
     )
     age = models.CharField(max_length=16, choices=Age.choices, default=Age.ALL)
     certificate = models.BooleanField(default=False)
+    # Marks an opportunity from a trusted/verified source (staff-set only).
+    verified = models.BooleanField(default=False)
     fields = models.ManyToManyField(
         OpportunityField, related_name="opportunities", blank=True
     )

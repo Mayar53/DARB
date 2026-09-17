@@ -205,6 +205,8 @@ class Opportunity(Entity):
     organization_website: str = ""
     age: str = "all"
     certificate: bool = False
+    # True when the opportunity comes from a trusted/verified source (staff-set).
+    verified: bool = False
     apply_clicks: int = 0
     views: int = 0
     # Field/domain tags (chemistry, art, sport…).

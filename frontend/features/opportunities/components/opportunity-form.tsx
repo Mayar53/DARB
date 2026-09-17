@@ -58,6 +58,7 @@ interface FormState {
   is_active: boolean;
   age: string;
   certificate: boolean;
+  verified: boolean;
   fields: string[];
   /** UI-only: whether the admin is entering the field in both languages. */
   dualTitle: boolean;
@@ -84,6 +85,7 @@ const EMPTY: FormState = {
   is_active: true,
   age: "all",
   certificate: false,
+  verified: false,
   fields: [],
   dualTitle: false,
   dualDescription: false,
@@ -116,6 +118,7 @@ function fromOpportunity(o: Opportunity): FormState {
     is_active: o.is_active,
     age: o.age,
     certificate: o.certificate,
+    verified: o.verified ?? false,
     fields: o.fields ?? [],
     dualTitle: Boolean(o.title_ar || o.title_en),
     dualDescription: Boolean(o.description_ar || o.description_en),
@@ -211,6 +214,7 @@ export function OpportunityForm({
         is_active: form.is_active,
         age: form.age,
         certificate: form.certificate,
+        verified: form.verified,
         fields: form.fields,
       };
       if (editing && initial) {
@@ -661,6 +665,16 @@ export function OpportunityForm({
             className="size-4 accent-primary"
           />
           {t("home.certificateOffered")}
+        </label>
+
+        <label className="flex cursor-pointer items-center gap-2 text-sm font-medium sm:col-span-2">
+          <input
+            type="checkbox"
+            checked={form.verified}
+            onChange={(e) => set("verified", e.target.checked)}
+            className="size-4 accent-primary"
+          />
+          {t("admin.form.verified")}
         </label>
 
         <label className="flex cursor-pointer items-center gap-2 text-sm font-medium sm:col-span-2">

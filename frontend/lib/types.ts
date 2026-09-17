@@ -97,6 +97,8 @@ export interface Opportunity {
   status?: string;
   age: string;
   certificate: boolean;
+  /** Staff-set: opportunity comes from a trusted/verified source. */
+  verified?: boolean;
   fields: string[];
   comment_count?: number;
   saved_count?: number;

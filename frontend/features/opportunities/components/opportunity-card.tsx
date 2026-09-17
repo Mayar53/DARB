@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Banknote, Clock, MapPin, MessageCircle, Users } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Banknote, Clock, MapPin, MessageCircle, Users } from "lucide-react";
 import Link from "next/link";
 
 import { AppliedButton } from "@/features/applied";
@@ -43,13 +43,24 @@ export function OpportunityCard({
       <span className="absolute inset-y-0 start-0 w-[5px] bg-[var(--cat-color)] opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
       {/* Top row: category chip (start) + actions (end) — fixed height so every card aligns. */}
       <div className="flex min-h-8 items-start justify-between gap-2">
-        <span
-          className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white"
-          style={{ backgroundColor: cat.color }}
-        >
-          {t(cat.labelKey)}
-          {closed && <span className="rounded-full bg-white/25 px-1.5 py-px text-[10px]">●</span>}
-        </span>
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <span
+            className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-white"
+            style={{ backgroundColor: cat.color }}
+          >
+            {t(cat.labelKey)}
+            {closed && <span className="rounded-full bg-white/25 px-1.5 py-px text-[10px]">●</span>}
+          </span>
+          {opportunity.verified && (
+            <span
+              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600"
+              title={t("home.verified")}
+            >
+              <BadgeCheck className="size-3" />
+              {t("home.verified")}
+            </span>
+          )}
+        </div>
         <div className="flex shrink-0 items-center gap-1.5">
           {closingSoon && !closed && (
             <span className="hidden items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground sm:inline-flex">

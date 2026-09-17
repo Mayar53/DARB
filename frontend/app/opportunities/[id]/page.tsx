@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Award, Banknote, Building2, CalendarDays, Clock, ExternalLink, Globe, MapPin, Share2, Sparkles, Users } from "lucide-react";
+import { ArrowUpRight, Award, BadgeCheck, Banknote, Building2, CalendarDays, Clock, ExternalLink, Globe, MapPin, Share2, Sparkles, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -146,6 +146,12 @@ export default function OpportunityDetailPage({
           >
             {t(cat.labelKey)}
           </span>
+          {opportunity.verified && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+              <BadgeCheck className="size-3.5" />
+              {t("home.verified")}
+            </span>
+          )}
           {closed && (
             <span className="rounded-full bg-destructive/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-destructive">
               {t("home.closed")}
