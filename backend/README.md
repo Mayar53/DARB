@@ -59,7 +59,29 @@ Production uses `config.settings.prod` (Postgres, Redis, MinIO/S3, hardened secu
 docker compose up --build
 ```
 
-The container entrypoint runs `migrate` + `collectstatic` then starts Gunicorn.
+The container entrypoint runs `migrate` + `ensure_admin` on start, then (for the
+web role) `collectstatic` and Gunicorn.
 
 **Coolify:** deploy from the `Dockerfile` (or this `docker-compose.yml`) and set the same
 environment variables in the Coolify UI. The app listens on port `8000`.
+
+### Scheduled jobs (archive expired opportunities)
+
+The public listing already hides opportunities past their deadline. To also flip
+them to `archived` in the database, run the `archive_expired` command on a schedule:
+
+```bash
+uv run python manage.py archive_expired
+```
+
+On **Render**, create a **Cron Job** from the same repo/Dockerfile:
+
+- **Dockerfile Path:** `backend/Dockerfile`, **Root Directory:** *(empty)*
+- **Command:** `uv run python manage.py archive_expired`
+- **Schedule:** e.g. `0 3 * * *` (daily at 03:00)
+- **Env vars:** the same `DJANGO_SETTINGS_MODULE`, `DJANGO_SECRET_KEY`, `DATABASE_URL`
+  as the web service
+
+The entrypoint detects a passed command and runs it instead of the web server, so
+the same image works for both roles.
+
