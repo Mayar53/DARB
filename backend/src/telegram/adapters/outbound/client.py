@@ -65,3 +65,11 @@ class TelegramClient:
     def delete_webhook(self) -> bool:
         result = self._call("deleteWebhook")
         return bool(result and result.get("ok"))
+
+    def get_me(self) -> dict[str, Any] | None:
+        result = self._call("getMe")
+        return result.get("result") if result and result.get("ok") else None
+
+    def get_webhook_info(self) -> dict[str, Any] | None:
+        result = self._call("getWebhookInfo")
+        return result.get("result") if result and result.get("ok") else None
