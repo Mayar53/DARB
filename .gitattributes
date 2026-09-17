@@ -1,0 +1,11 @@
+# Normalize line endings so files deployed into Linux containers are correct.
+# A CRLF shell script breaks the container entrypoint ("bad interpreter").
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.py text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
