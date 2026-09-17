@@ -52,6 +52,12 @@ export const useEngagementStore = create<EngagementState>((set, get) => ({
           appliedIds: new Set(applied.map((a) => a.opportunity_id)),
           loaded: true,
         });
+      } catch {
+        // A rejected token (401) is handled by the api client, which clears the
+        // session on a failed refresh — that flips isAuthenticated and stops the
+        // hooks from retrying. Never let this propagate as an unhandled
+        // rejection (it would otherwise surface as a runtime error).
+        set({ loaded: false, savedIds: new Set(), appliedIds: new Set() });
       } finally {
         set({ loading: false });
         loadPromise = null;
