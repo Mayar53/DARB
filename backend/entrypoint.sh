@@ -14,8 +14,10 @@ fi
 # Web server path: gather static assets, then serve with Gunicorn.
 uv run python manage.py collectstatic --noinput
 
+# Bind to the port the host assigns ($PORT — Render sets this, default 10000);
+# fall back to 8000 for local/Docker-compose use.
 exec uv run gunicorn config.wsgi:application \
-    --bind 0.0.0.0:8000 \
+    --bind "0.0.0.0:${PORT:-8000}" \
     --workers "${GUNICORN_WORKERS:-3}" \
     --access-logfile - \
     --error-logfile -
