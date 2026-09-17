@@ -14,6 +14,13 @@ fi
 # Web server path: gather static assets, then serve with Gunicorn.
 uv run python manage.py collectstatic --noinput
 
+# Optional first-boot content seed (idempotent — safe to leave on).
+# Enable by setting SEED_ON_DEPLOY=true on the host; unset it once the database
+# has the content you want, so demo rows are never re-added.
+if [ "${SEED_ON_DEPLOY:-}" = "true" ]; then
+    uv run python manage.py seed_opportunities
+fi
+
 # Bind to the port the host assigns ($PORT — Render sets this, default 10000);
 # fall back to 8000 for local/Docker-compose use.
 exec uv run gunicorn config.wsgi:application \
