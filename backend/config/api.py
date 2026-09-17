@@ -48,6 +48,12 @@ api.add_router("/analytics", analytics_router, tags=["analytics"])
 api.add_router("/telegram", telegram_router, tags=["telegram"])
 
 
+@api.get("/health", tags=["health"], auth=None)
+def health(request):
+    """Liveness probe — point the host's health check at /api/health."""
+    return {"status": "ok"}
+
+
 # --------------------------------------------------------------------------- #
 # Domain-exception -> HTTP mapping (single source of truth)
 # --------------------------------------------------------------------------- #

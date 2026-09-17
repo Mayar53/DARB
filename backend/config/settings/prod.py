@@ -11,9 +11,19 @@ DEBUG = False
 MIDDLEWARE = MIDDLEWARE.copy()
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 
-# Hosts/CSRF must be provided explicitly in production.
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS")
-CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+# Hosts/CSRF. Prefer the explicit env vars, but always accept the host Render
+# assigns to this service (RENDER_EXTERNAL_HOSTNAME) so a missing var can't
+# crash the app with DisallowedHost. Falls back to localhost in the worst case.
+_hosts = env.list("DJANGO_ALLOWED_HOSTS", default=[])
+_render_host = env("RENDER_EXTERNAL_HOSTNAME", default="").strip()
+if _render_host and _render_host not in _hosts:
+    _hosts.append(_render_host)
+ALLOWED_HOSTS = _hosts or ["localhost", "127.0.0.1"]
+
+_origins = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+if _render_host and f"https://{_render_host}" not in _origins:
+    _origins.append(f"https://{_render_host}")
+CSRF_TRUSTED_ORIGINS = _origins
 
 # --- Database: Postgres -----------------------------------------------------
 DATABASES = {"default": env.db("DATABASE_URL")}
