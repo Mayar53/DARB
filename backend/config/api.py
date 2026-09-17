@@ -20,6 +20,7 @@ from src.opportunities.adapters.inbound.router import router as opportunities_ro
 from src.saved.adapters.inbound.router import router as saved_router
 from src.shared.infrastructure.analytics_router import router as analytics_router
 from src.stories.adapters.inbound.router import router as stories_router
+from src.telegram.adapters.inbound.router import router as telegram_router
 from src.shared.domain.exceptions import (
     AuthenticationError,
     ConflictError,
@@ -44,6 +45,7 @@ api.add_router("/applied", applied_router, tags=["applied"])
 api.add_router("/gamification", gamification_router, tags=["gamification"])
 api.add_router("/comments", comments_router, tags=["comments"])
 api.add_router("/analytics", analytics_router, tags=["analytics"])
+api.add_router("/telegram", telegram_router, tags=["telegram"])
 
 
 # --------------------------------------------------------------------------- #

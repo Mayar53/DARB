@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "src.applied",
     "src.gamification",
     "src.comments",
+    "src.telegram",
 ]
 
 # django-unfold admin theme
@@ -173,3 +174,15 @@ CORS_ALLOWED_ORIGINS = env.list(
     default=["http://localhost:3000", "http://127.0.0.1:3000"],
 )
 CORS_ALLOW_CREDENTIALS = True
+
+# --------------------------------------------------------------------------- #
+# Telegram (opportunity channel + subscriber bot). All optional — when
+# TELEGRAM_BOT_TOKEN is unset the integration is simply dormant.
+# --------------------------------------------------------------------------- #
+TELEGRAM_BOT_TOKEN = env("TELEGRAM_BOT_TOKEN", default="")
+# Channel/group to auto-post published opportunities to (e.g. "@darb_channel").
+TELEGRAM_CHANNEL_ID = env("TELEGRAM_CHANNEL_ID", default="")
+# Shared secret guarding the webhook route (Telegram sends it back verbatim).
+TELEGRAM_WEBHOOK_SECRET = env("TELEGRAM_WEBHOOK_SECRET", default="")
+# Public base URL of the frontend, used to build opportunity links.
+FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="")

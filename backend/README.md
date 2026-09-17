@@ -85,3 +85,30 @@ On **Render**, create a **Cron Job** from the same repo/Dockerfile:
 The entrypoint detects a passed command and runs it instead of the web server, so
 the same image works for both roles.
 
+### Telegram (channel + subscriber bot)
+
+Optional. When `TELEGRAM_BOT_TOKEN` is unset the integration is completely dormant.
+
+1. Create a bot with **@BotFather** → copy the token into `TELEGRAM_BOT_TOKEN`.
+2. Add the bot as an **admin of your channel** and set `TELEGRAM_CHANNEL_ID`
+   (e.g. `@darb_channel` or the numeric `-100…` id).
+3. Pick any random string for `TELEGRAM_WEBHOOK_SECRET`, set `FRONTEND_BASE_URL`
+   (so messages link to opportunities), and redeploy.
+4. Register the webhook once (against the **deployed** backend):
+
+```bash
+python manage.py set_telegram_webhook --url https://your-backend.onrender.com
+```
+
+Behaviour:
+
+- **Publishing an opportunity** (create, or status → published) auto-posts it to
+  the channel and DMs every active subscriber whose categories match. Re-editing
+  an already-published opportunity does **not** re-post.
+- **Bot commands** (users DM the bot): `/start`, `/subscribe [category, …]`
+  (no categories = all), `/unsubscribe`, `/latest`, `/categories`, `/help`.
+- Broadcasts run on a background thread, so Telegram being slow/down never blocks
+  an admin's save. All failures are logged and swallowed.
+
+Manage subscribers in the Django admin (`Telegram subscribers`).
+
