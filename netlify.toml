@@ -1,0 +1,15 @@
+# Netlify build configuration — MUST live at the repository root for Netlify to
+# read it. This is a monorepo (backend/ + frontend/), so `base` points at the
+# frontend; `command` and `publish` are relative to that base.
+#
+# Next.js Runtime plugin handles the App Router build/serving automatically.
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[build.environment]
+  NODE_VERSION = "22"
