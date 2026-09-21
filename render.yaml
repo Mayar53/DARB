@@ -1,0 +1,98 @@
+# Render Blueprint — backend (Django/Gunicorn) + Postgres.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Deploy: Render Dashboard -> New -> Blueprint -> pick Mayar53/DARB.
+# Values marked `sync: false` are NOT stored here — Render prompts for them on
+# first deploy so no secret ever lands in git.
+
+databases:
+  - name: darb-db
+    databaseName: darb
+    user: darb
+    region: frankfurt
+
+services:
+  - type: web
+    name: darb-backend
+    runtime: docker
+    region: frankfurt
+    # backend/Dockerfile copies from the repo root, so the context stays ".".
+    dockerContext: .
+    dockerfilePath: ./backend/Dockerfile
+    # Liveness probe -> config/api.py returns {"status": "ok"} with auth=None.
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.prod
+
+      # Generated once by Render; rotating DJANGO_SECRET_KEY invalidates
+      # sessions and password-reset links.
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+
+      # Comma-separated, no scheme. prod.py also auto-appends the
+      # RENDER_EXTERNAL_HOSTNAME Render assigns.
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false
+      # Full origins WITH scheme (https://...), comma-separated.
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+
+      # First-admin bootstrap — `ensure_admin` runs on every boot (idempotent).
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_FULL_NAME
+        value: Darb Admin
+
+      # Password-reset mail. Same mailbox as the site footer.
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      - key: EMAIL_BACKEND
+        value: django.core.mail.backends.smtp.EmailBackend
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_HOST_USER
+        sync: false
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+      - key: EMAIL_USE_TLS
+        value: "True"
+
+      # Public frontend URL — used to build links in Telegram posts.
+      - key: FRONTEND_BASE_URL
+        sync: false
+
+      - key: DATABASE_URL
+        fromDatabase:
+          name: darb-db
+          property: connectionString
+
+      - key: GUNICORN_WORKERS
+        value: "3"
+      - key: DJANGO_TIME_ZONE
+        value: UTC
+
+      # Uncomment to seed demo opportunities on first boot, then set to false
+      # once the database has the content you want (it is idempotent).
+      # - key: SEED_ON_DEPLOY
+      #   value: "true"
+
+      # Optional: object storage for persistent media. Without these, uploads
+      # land on the container disk and are LOST on every redeploy.
+      # - key: S3_BUCKET_NAME
+      #   sync: false
+      # - key: S3_ENDPOINT_URL
+      #   sync: false
+      # - key: S3_ACCESS_KEY
+      #   sync: false
+      # - key: S3_SECRET_KEY
+      #   sync: false
