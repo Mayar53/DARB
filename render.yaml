@@ -86,13 +86,29 @@ services:
       # - key: SEED_ON_DEPLOY
       #   value: "true"
 
-      # Optional: object storage for persistent media. Without these, uploads
-      # land on the container disk and are LOST on every redeploy.
-      # - key: S3_BUCKET_NAME
-      #   sync: false
-      # - key: S3_ENDPOINT_URL
-      #   sync: false
-      # - key: S3_ACCESS_KEY
-      #   sync: false
-      # - key: S3_SECRET_KEY
-      #   sync: false
+      # No S3/storage variables are needed. The API stores no uploaded files —
+      # avatars are emoji strings and stories are text — so there is no media
+      # to persist across deploys.
+
+  # Frontend (Next.js), served as a standard Node service: `next build` then
+  # `next start`. Hosted next to the backend because Vercel is unavailable in
+  # the target region and the Netlify builds were unreliable.
+  - type: web
+    name: darb-frontend
+    runtime: node
+    region: frankfurt
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # NEXT_PUBLIC_* values are inlined into the browser bundle at BUILD time,
+      # so they must exist during the build — lib/env.ts validates the URL.
+      - key: NEXT_PUBLIC_API_URL
+        value: https://darb-backend-dli6.onrender.com/api
+      # Lets next/image load media served by the backend.
+      - key: NEXT_PUBLIC_MEDIA_HOST
+        value: darb-backend-dli6.onrender.com
