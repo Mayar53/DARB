@@ -13,3 +13,12 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Netlify prefers this file over the repo-root netlify.toml when the base
+  # directory is set, so the NEXT_PUBLIC_* values must be declared here (the
+  # root file carries the same ones for the base-directory-empty case).
+  #
+  # They must exist at BUILD time: lib/env.ts validates NEXT_PUBLIC_API_URL and
+  # fails the build if it is missing.
+  NEXT_PUBLIC_API_URL = "https://darb-backend-dli6.onrender.com/api"
+  # Lets next/image load media served by the backend (images.remotePatterns).
+  NEXT_PUBLIC_MEDIA_HOST = "darb-backend-dli6.onrender.com"
