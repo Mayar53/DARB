@@ -52,6 +52,31 @@ async function tryRefresh(): Promise<boolean> {
 }
 
 /**
+ * Render an API `detail` payload as a readable message.
+ *
+ * django-ninja reports validation failures as `detail: [{ loc, msg }, ...]`,
+ * and `String()` on that array collapses to "[object Object]" — useless in a
+ * toast. Flatten it into "field: message" pairs instead.
+ */
+function formatErrorDetail(detail: unknown): string | null {
+  if (typeof detail === "string") return detail || null;
+  if (Array.isArray(detail)) {
+    const parts = detail.map((item) => {
+      if (!item || typeof item !== "object") return String(item);
+      const { loc, msg } = item as { loc?: unknown; msg?: unknown };
+      const message = msg !== undefined ? String(msg) : JSON.stringify(item);
+      const field = Array.isArray(loc)
+        ? loc.filter((part) => part !== "body" && part !== "payload").join(".")
+        : "";
+      return field ? `${field}: ${message}` : message;
+    });
+    return parts.length > 0 ? parts.join("; ") : null;
+  }
+  if (detail && typeof detail === "object") return JSON.stringify(detail);
+  return null;
+}
+
+/**
  * Single fetch wrapper used by every feature's api module (DRY).
  * Injects the JWT, transparently refreshes once on 401, and throws ApiError.
  */
@@ -73,10 +98,8 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   if (!res.ok) {
     const data = await res.json().catch(() => null);
-    const message =
-      (data && typeof data === "object" && "detail" in data && String(data.detail)) ||
-      res.statusText;
-    throw new ApiError(res.status, message, data);
+    const detail = data && typeof data === "object" && "detail" in data ? data.detail : null;
+    throw new ApiError(res.status, formatErrorDetail(detail) ?? res.statusText, data);
   }
 
   if (res.status === 204) return undefined as T;
