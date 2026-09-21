@@ -13,3 +13,9 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # NEXT_PUBLIC_* values are inlined into the browser bundle at build time, so
+  # they must exist during the build (here or in the Netlify UI). lib/env.ts
+  # validates NEXT_PUBLIC_API_URL and fails the build if it is missing.
+  NEXT_PUBLIC_API_URL = "https://darb-backend-dli6.onrender.com/api"
+  # Lets next/image load media served by the backend (images.remotePatterns).
+  NEXT_PUBLIC_MEDIA_HOST = "darb-backend-dli6.onrender.com"
