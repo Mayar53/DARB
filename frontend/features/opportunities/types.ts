@@ -26,7 +26,6 @@ export interface CreateOpportunityInput {
   apply_url: string;
   organization?: string | number | null;
   organization_website?: string;
-  is_active: boolean;
   status?: string;
   age: string;
   certificate: boolean;

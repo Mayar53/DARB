@@ -413,7 +413,6 @@ const en = {
   "admin.form.organizationPh": "e.g. Youth Organization Name",
   "admin.form.ngoWebsite": "NGO website",
   "admin.form.ngoWebsitePh": "https://ngo.example.com",
-  "admin.form.active": "Visible on home page",
   "admin.form.verified": "Verified source",
 
   // ---- Owner dashboard ----
@@ -980,7 +979,6 @@ const ar: Record<MessageKey, string> = {
   "admin.form.organizationPh": "مثال: اسم منظمة الشباب",
   "admin.form.ngoWebsite": "موقع الجهة",
   "admin.form.ngoWebsitePh": "https://ngo.example.com",
-  "admin.form.active": "ظاهرة في الصفحة الرئيسية",
   "admin.form.verified": "مصدر موثّق",
 
   // ---- لوحة تحكم المالك ----

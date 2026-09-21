@@ -55,7 +55,6 @@ interface FormState {
   apply_url: string;
   organization: string;
   organization_website: string;
-  is_active: boolean;
   age: string;
   certificate: boolean;
   verified: boolean;
@@ -82,7 +81,6 @@ const EMPTY: FormState = {
   apply_url: "",
   organization: "",
   organization_website: "",
-  is_active: true,
   age: "all",
   certificate: false,
   verified: false,
@@ -115,7 +113,6 @@ function fromOpportunity(o: Opportunity): FormState {
     apply_url: o.apply_url,
     organization: o.organization_name ?? "",
     organization_website: o.organization_website ?? "",
-    is_active: o.is_active,
     age: o.age,
     certificate: o.certificate,
     verified: o.verified ?? false,
@@ -211,7 +208,6 @@ export function OpportunityForm({
         apply_url: form.apply_url,
         organization: form.organization,
         organization_website: form.organization_website,
-        is_active: form.is_active,
         age: form.age,
         certificate: form.certificate,
         verified: form.verified,
@@ -677,15 +673,6 @@ export function OpportunityForm({
           {t("admin.form.verified")}
         </label>
 
-        <label className="flex cursor-pointer items-center gap-2 text-sm font-medium sm:col-span-2">
-          <input
-            type="checkbox"
-            checked={form.is_active}
-            onChange={(e) => set("is_active", e.target.checked)}
-            className="size-4 accent-primary"
-          />
-          {t("admin.form.active")}
-        </label>
       </div>
 
       <div className="flex items-center gap-2">

@@ -353,6 +353,75 @@ def test_draft_and_archived_not_public():
     assert any(o["id"] == draft.json()["id"] for o in dash.json()["items"])
 
 
+@pytest.mark.django_db
+def test_publish_payload_from_admin_form_is_accepted():
+    """The admin dashboard's create payload round-trips.
+
+    Mirrors the field set the frontend form sends (including organization and
+    fields) so a schema/form mismatch surfaces here instead of only in the
+    browser, where it shows up as a toast.
+    """
+    _make_owner()
+    client, tokens = _login("boss@example.com")
+
+    created = client.post(
+        "/api/opportunities",
+        data={
+            "category": "scholarship",
+            "title": "Form Payload Scholarship",
+            "description": "Published from the admin form.",
+            "title_ar": None,
+            "title_en": None,
+            "description_ar": None,
+            "description_en": None,
+            "location": "",
+            "mode": "online",
+            "duration": "",
+            "funding": "fully-funded",
+            "price": "",
+            "deadline": None,
+            "apply_url": "https://example.com/apply",
+            "organization": "Form Payload NGO",
+            "organization_website": "https://ngo.example.com",
+            "age": "all",
+            "certificate": True,
+            "verified": False,
+            "fields": ["biology"],
+        },
+        content_type="application/json",
+        headers=_h(tokens),
+    )
+    assert created.status_code == 201, created.content
+    body = created.json()
+    assert body["status"] == "published"
+    assert body["is_active"] is True
+    assert body["organization_name"] == "Form Payload NGO"
+    assert body["fields"] == ["biology"]
+
+    # A published opportunity is visible on the public listing.
+    public = client.get("/api/opportunities")
+    assert any(o["id"] == body["id"] for o in public.json())
+
+
+@pytest.mark.django_db
+def test_publish_rejects_unknown_category_with_details():
+    """Invalid input is a 422 carrying a details list, never a 500.
+
+    The frontend renders that list, so its shape is part of the contract.
+    """
+    _make_owner()
+    client, tokens = _login("boss@example.com")
+
+    rejected = client.post(
+        "/api/opportunities",
+        data={"category": "not-a-category", "title": "X", "description": "Y"},
+        content_type="application/json",
+        headers=_h(tokens),
+    )
+    assert rejected.status_code == 422
+    assert isinstance(rejected.json()["detail"], list)
+
+
 # --------------------------------------------------------------------------- #
 # Hide permission rules
 # --------------------------------------------------------------------------- #
