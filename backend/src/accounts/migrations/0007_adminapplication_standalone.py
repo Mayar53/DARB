@@ -23,10 +23,14 @@ class Migration(migrations.Migration):
 
     operations = [
         # 1. Add nullable email/full_name so existing rows can be backfilled.
+        # No db_index here: step 4 makes the field unique, and on Postgres a
+        # non-unique db_index ALSO creates a "<name>_like" varchar_pattern_ops
+        # index that step 4 then collides with. The unique constraint added in
+        # step 4 provides the index.
         migrations.AddField(
             model_name="adminapplication",
             name="email",
-            field=models.EmailField(blank=True, db_index=True, max_length=254, null=True),
+            field=models.EmailField(blank=True, max_length=254, null=True),
         ),
         migrations.AddField(
             model_name="adminapplication",
