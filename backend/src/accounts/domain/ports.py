@@ -40,7 +40,14 @@ class UserRepository(ABC):
     def list_users(self) -> list[User]: ...
 
     @abstractmethod
-    def update_profile(self, user_id: int, *, nickname: str | None = None, avatar: str | None = None) -> User | None: ...
+    def update_profile(
+        self,
+        user_id: int,
+        *,
+        full_name: str | None = None,
+        nickname: str | None = None,
+        avatar: str | None = None,
+    ) -> User | None: ...
 
     @abstractmethod
     def set_staff(self, user_id: int, *, is_staff: bool, is_superuser: bool) -> User | None: ...

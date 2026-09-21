@@ -16,6 +16,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/features/auth";
 import { useGamification } from "@/features/gamification";
 import { useTranslation } from "@/hooks/use-translation";
@@ -126,6 +128,105 @@ function AvatarPicker() {
   );
 }
 
+/**
+ * Editable name row. Saves through the same PATCH /auth/me as the avatar
+ * picker, so the auth store (and every page reading `user.full_name`) updates
+ * in place.
+ */
+function NameEditor({ label, value }: { label: string; value: string }) {
+  const { t } = useTranslation();
+  const { user, setUser } = useAuth();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const trimmed = name.trim();
+
+  const openDialog = () => {
+    setName(user?.full_name ?? "");
+    setOpen(true);
+  };
+
+  const save = async () => {
+    if (!trimmed || saving) return;
+    setSaving(true);
+    try {
+      const updated = await authApi.updateMe({ full_name: trimmed });
+      setUser(updated);
+      toast.success(t("account.nameSaved"));
+      setOpen(false);
+    } catch {
+      toast.error(t("account.nameSaveError"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
+      <div className="flex items-center justify-between gap-4 border-b py-2 last:border-b-0">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="inline-flex items-center gap-2">
+          <span className="font-medium">{value}</span>
+          <DialogPrimitive.Trigger asChild>
+            <button
+              type="button"
+              onClick={openDialog}
+              aria-label={t("account.editName")}
+              className="inline-flex size-6 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <PencilSimple size={12} weight="bold" />
+            </button>
+          </DialogPrimitive.Trigger>
+        </span>
+      </div>
+
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/50 animate-in fade-in" />
+        <DialogPrimitive.Content className="fixed top-1/2 left-1/2 z-50 flex w-[min(92vw,26rem)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-2xl border border-border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95">
+          <DialogPrimitive.Title className="font-heading text-lg font-bold text-foreground">
+            {t("account.editName")}
+          </DialogPrimitive.Title>
+          <DialogPrimitive.Description className="mt-1 text-sm text-muted-foreground">
+            {t("account.nameSubtitle")}
+          </DialogPrimitive.Description>
+
+          <form
+            className="mt-5"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void save();
+            }}
+          >
+            <Label htmlFor="profile-name" className="sr-only">
+              {label}
+            </Label>
+            <Input
+              id="profile-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              maxLength={255}
+              autoFocus
+              disabled={saving}
+            />
+
+            <div className="mt-5 flex justify-end gap-2">
+              <DialogPrimitive.Close asChild>
+                <Button type="button" variant="outline">
+                  {t("admin.cancel")}
+                </Button>
+              </DialogPrimitive.Close>
+              <Button type="submit" disabled={saving || trimmed.length === 0}>
+                {t("common.save")}
+              </Button>
+            </div>
+          </form>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  );
+}
+
 /** Post-login screen: the signed-in account with avatar picker. */
 export function AccountView() {
   const { user } = useAuth();
@@ -175,7 +276,7 @@ export function AccountView() {
           <CardDescription>{summary}</CardDescription>
         </CardHeader>
         <CardContent className="text-sm">
-          <Row label={t("account.name")} value={user?.full_name || "—"} />
+          <NameEditor label={t("account.name")} value={user?.full_name || "—"} />
           {user?.nickname ? <Row label={t("account.nickname")} value={user.nickname} /> : null}
           <Row label={t("account.email")} value={user?.email || "—"} dir="ltr" />
           <Row label={t("account.role")} value={role} />

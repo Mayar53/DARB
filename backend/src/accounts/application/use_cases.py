@@ -572,12 +572,13 @@ class CreateOrganization(UseCase[Organization, Organization]):
 
 @dataclass(frozen=True)
 class UpdateProfileCommand:
+    full_name: str | None = None
     nickname: str | None = None
     avatar: str | None = None
 
 
 class UpdateProfile(UseCase[UpdateProfileCommand, User]):
-    """Update the caller's own nickname/avatar."""
+    """Update the caller's own name/nickname/avatar."""
 
     def __init__(self, users: UserRepository) -> None:
         self._users = users
@@ -585,6 +586,7 @@ class UpdateProfile(UseCase[UpdateProfileCommand, User]):
     def execute(self, data: UpdateProfileCommand, *, user_id: int) -> User:
         user = self._users.update_profile(
             user_id,
+            full_name=data.full_name.strip() if data.full_name is not None else None,
             nickname=data.nickname.strip() if data.nickname is not None else None,
             avatar=data.avatar.strip() if data.avatar is not None else None,
         )

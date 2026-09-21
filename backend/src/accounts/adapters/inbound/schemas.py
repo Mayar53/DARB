@@ -184,6 +184,7 @@ class AdminUpdateIn(Schema):
 
 
 class ProfileUpdateIn(Schema):
+    full_name: str | None = Field(default=None, min_length=1, max_length=255)
     nickname: str | None = Field(default=None, max_length=64)
     avatar: str | None = Field(default=None, max_length=8)
 

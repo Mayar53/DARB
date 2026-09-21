@@ -66,15 +66,24 @@ class DjangoUserRepository(UserRepository):
         rows = UserModel.objects.all().order_by("id")
         return [self._to_entity(row) for row in rows]
 
-    def update_profile(self, user_id: int, *, nickname: str | None = None, avatar: str | None = None) -> User | None:
+    def update_profile(
+        self,
+        user_id: int,
+        *,
+        full_name: str | None = None,
+        nickname: str | None = None,
+        avatar: str | None = None,
+    ) -> User | None:
         row = UserModel.objects.filter(pk=user_id).first()
         if row is None:
             return None
+        if full_name is not None:
+            row.full_name = full_name
         if nickname is not None:
             row.nickname = nickname
         if avatar is not None:
             row.avatar = avatar
-        row.save(update_fields=["nickname", "avatar", "updated_at"])
+        row.save(update_fields=["full_name", "nickname", "avatar", "updated_at"])
         return self._to_entity(row)
 
     def set_staff(self, user_id: int, *, is_staff: bool, is_superuser: bool) -> User | None:

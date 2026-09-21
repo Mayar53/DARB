@@ -82,6 +82,41 @@ def test_nickname_on_register(user_tokens):
 
 
 @pytest.mark.django_db
+def test_update_profile_name(user_tokens):
+    """PATCH /api/auth/me renames the caller and leaves the nickname alone."""
+    client = Client()
+    patched = client.patch(
+        "/api/auth/me",
+        data={"full_name": "Renamed User"},
+        content_type="application/json",
+        headers=_h(user_tokens),
+    )
+    assert patched.status_code == 200, patched.content
+    assert patched.json()["full_name"] == "Renamed User"
+
+    # Persisted, and the untouched nickname survived the partial update.
+    me = client.get("/api/auth/me", headers=_h(user_tokens))
+    assert me.json()["full_name"] == "Renamed User"
+    assert me.json()["nickname"] == "tester"
+
+
+@pytest.mark.django_db
+def test_update_profile_name_rejects_blank(user_tokens):
+    """A blank name is rejected rather than wiping the caller's name."""
+    client = Client()
+    rejected = client.patch(
+        "/api/auth/me",
+        data={"full_name": ""},
+        content_type="application/json",
+        headers=_h(user_tokens),
+    )
+    assert rejected.status_code == 422
+
+    me = client.get("/api/auth/me", headers=_h(user_tokens))
+    assert me.json()["full_name"] == "Test User"
+
+
+@pytest.mark.django_db
 def test_admin_can_create_admin(admin_tokens):
     client = Client()
     created = client.post(

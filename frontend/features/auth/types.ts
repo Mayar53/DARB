@@ -13,6 +13,7 @@ export interface RegisterRequest {
 }
 
 export interface UpdateProfileRequest {
+  full_name?: string;
   nickname?: string;
   avatar?: string;
 }

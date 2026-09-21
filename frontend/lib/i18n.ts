@@ -63,6 +63,7 @@ const en = {
   "nav.goBack": "Go back",
   "common.logout": "Logout",
   "common.loading": "Loading…",
+  "common.save": "Save",
 
   "account.thisAccount": "This account",
   "account.summaryAdmin": "You are signed in as an administrator account.",
@@ -83,6 +84,10 @@ const en = {
   "account.avatarSubtitle": "Pick an emoji to represent you — no photo needed.",
   "account.avatarSaved": "Avatar updated",
   "account.avatarSaveError": "Could not update avatar",
+  "account.editName": "Edit name",
+  "account.nameSubtitle": "This is how your name appears across Darb.",
+  "account.nameSaved": "Name updated",
+  "account.nameSaveError": "Could not update name",
 
   "toggle.language": "Switch language",
   "toggle.theme": "Toggle theme",
@@ -625,6 +630,7 @@ const ar: Record<MessageKey, string> = {
   "nav.goBack": "رجوع",
   "common.logout": "خروج",
   "common.loading": "جارٍ التحميل…",
+  "common.save": "حفظ",
 
   "account.thisAccount": "هذا الحساب",
   "account.summaryAdmin": "أنت مسجّل الدخول بحساب مشرف.",
@@ -645,6 +651,10 @@ const ar: Record<MessageKey, string> = {
   "account.avatarSubtitle": "اختر رمزاً يمثّلك — لا حاجة لصورة شخصية.",
   "account.avatarSaved": "تم تحديث الصورة الرمزية",
   "account.avatarSaveError": "تعذّر تحديث الصورة الرمزية",
+  "account.editName": "تعديل الاسم",
+  "account.nameSubtitle": "هكذا يظهر اسمك في درب.",
+  "account.nameSaved": "تم تحديث الاسم",
+  "account.nameSaveError": "تعذّر تحديث الاسم",
 
   "toggle.language": "تغيير اللغة",
   "toggle.theme": "تبديل السمة",
