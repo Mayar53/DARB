@@ -6,8 +6,9 @@ import html
 from dataclasses import dataclass
 
 from src.opportunities.domain.ports import OpportunityRepository
-from src.telegram.domain.ports import MessageSender, SubscriberRepository
 from src.shared.application.use_case import UseCase
+from src.telegram import faq
+from src.telegram.domain.ports import MessageSender, SubscriberRepository
 
 MODE_LABELS = {"online": "أونلاين / Online", "in-person": "حضوري / In-person", "hybrid": "هجين / Hybrid"}
 
@@ -83,6 +84,7 @@ WELCOME = (
     "/unsubscribe — إلغاء الاشتراك\n"
     "/latest — أحدث الفرص\n"
     "/categories — التصنيفات المتاحة\n"
+    "/faq — الأسئلة الشائعة / FAQ\n"
     "/help — المساعدة"
 )
 
@@ -130,6 +132,12 @@ class HandleUpdate(UseCase[dict, None]):
             self._reply(chat_id, self._latest_text())
         elif command == "/categories":
             self._reply(chat_id, self._categories_text())
+        elif command == "/faq":
+            # /faq -> the numbered index; /faq 3 -> that answer. An out-of-range
+            # or non-numeric argument falls back to the index rather than erroring.
+            number = args[0] if args else ""
+            answer = faq.answer_text(int(number)) if number.isdigit() else None
+            self._reply(chat_id, answer or faq.index_text())
         else:
             self._reply(chat_id, WELCOME)
 
