@@ -39,7 +39,7 @@ SUBJECT_TREE: tuple[tuple[str, tuple[str, ...]], ...] = (
     # Business & Economics
     ("business-economics", ("entrepreneurship", "marketing", "finance", "accounting", "management", "economics", "hr")),
     # Arts & Design
-    ("arts-design", ("graphic-design", "ui-ux", "illustration", "photography", "film-media", "fine-arts", "architecture")),
+    ("arts-design", ("graphic-design", "ui-ux", "illustration", "photography", "film-media", "fine-arts", "architecture", "music")),
     # Social Sciences & Humanities
     ("social-humanities", ("psychology", "sociology", "political-science", "international-relations", "law", "history", "philosophy", "languages")),
     # Social Impact & Community

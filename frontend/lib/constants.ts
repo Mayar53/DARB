@@ -161,6 +161,7 @@ export const SUBJECT_TREE: ReadonlyArray<{
       { key: "film-media", color: "#EA580C", labelKey: "field.filmMedia" },
       { key: "fine-arts", color: "#C026D3", labelKey: "field.fineArts" },
       { key: "architecture", color: "#A16207", labelKey: "field.architecture" },
+      { key: "music", color: "#DB2777", labelKey: "field.music" },
     ],
   },
   {
