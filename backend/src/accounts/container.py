@@ -65,7 +65,7 @@ class AccountsContainer:
 
     @property
     def apply_for_admin(self) -> ApplyForAdmin:
-        return ApplyForAdmin(self.users, self.admin_applications)
+        return ApplyForAdmin(self.users, self.admin_applications, self.hasher)
 
     @property
     def register_admin_application(self) -> RegisterAdminApplication:

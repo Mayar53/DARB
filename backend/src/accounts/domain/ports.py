@@ -73,6 +73,11 @@ class PasswordHasher(ABC):
     def hash(self, raw_password: str) -> str: ...
 
     @abstractmethod
+    def unusable(self) -> str:
+        """A hash that no password can ever match (used for passwordless accounts)."""
+        ...
+
+    @abstractmethod
     def verify(self, raw_password: str, hashed: str) -> bool: ...
 
 

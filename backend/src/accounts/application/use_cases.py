@@ -72,6 +72,8 @@ class AdminApplyCommand:
     reason: str = ""
     user_id: int | None = None
     request_type: str = "admin"  # "admin" (researcher) | "org" (organization admin)
+    # Used only when the email has no account yet (see ApplyForAdmin).
+    password: str = ""
 
 
 @dataclass(frozen=True)
@@ -136,33 +138,52 @@ class RegisterUser(UseCase[RegisterCommand, User]):
 
 
 class ApplyForAdmin(UseCase[AdminApplyCommand, AdminApplication]):
-    """Create an admin application for an existing user (or return the current one).
+    """Create an admin application for the applicant (or return the current one).
 
-    The applicant must already have a normal account (no second account is
-    created). The application is linked to that account via ``user_id``. If the
-    user already has an application in any state, it is returned unchanged — no
-    duplicate application records are created.
+    The public apply form needs no account: when the email has no user yet, a
+    normal account is created for it (role=user, no admin access) — with the
+    submitted password when one is given, so the applicant can sign in
+    immediately, otherwise passwordless (set later via "forgot password"). The
+    owner can approve the application in place. A signed-in applicant is linked
+    to their existing account instead, so no second account is ever created and
+    their password is never changed. If the email already has an application in
+    any state, it is returned unchanged — no duplicate records are created.
     """
 
     def __init__(
         self,
         users: UserRepository,
         applications: AdminApplicationRepository,
+        hasher: PasswordHasher,
     ) -> None:
         self._users = users
         self._applications = applications
+        self._hasher = hasher
 
     def execute(self, data: AdminApplyCommand) -> AdminApplication:
         email = _normalize_email(data.email)
-        user = self._users.get_by_email(email)
-        if user is None:
-            raise UserNotFound("No account found for this email — register a normal account first")
 
         # Existing application (any status) is returned as-is; the owner may
         # re-review waitlisted ones later, and approved ones keep their state.
         existing = self._applications.get_by_email(email)
         if existing is not None:
             return existing
+
+        user = self._users.get_by_email(email)
+        if user is None:
+            # No account yet — create a normal one so the application can be
+            # linked and approved in place. When the applicant supplied a
+            # password they can sign in right away; otherwise the account is
+            # passwordless and they set one later via "forgot password".
+            # An existing account's password is never touched here.
+            password_hash = (
+                self._hasher.hash(data.password) if data.password else self._hasher.unusable()
+            )
+            user = self._users.add(
+                email=email,
+                full_name=data.full_name.strip() or email,
+                password_hash=password_hash,
+            )
 
         return self._applications.create(
             email=email,

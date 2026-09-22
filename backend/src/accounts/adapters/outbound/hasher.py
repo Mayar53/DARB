@@ -11,5 +11,9 @@ class DjangoPasswordHasher(PasswordHasher):
     def hash(self, raw_password: str) -> str:
         return make_password(raw_password)
 
+    def unusable(self) -> str:
+        # Django's unusable-password marker — check_password() never matches it.
+        return make_password(None)
+
     def verify(self, raw_password: str, hashed: str) -> bool:
         return check_password(raw_password, hashed)

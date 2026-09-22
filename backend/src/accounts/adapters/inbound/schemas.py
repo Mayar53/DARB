@@ -40,6 +40,10 @@ class RegisterIn(Schema):
 
 class AdminApplyIn(Schema):
     email: EmailStr
+    # Only used when the email has no account yet: the applicant gets a normal
+    # account with this password so they can sign in immediately. Empty means
+    # the account is created passwordless (set later via "forgot password").
+    password: str = Field(default="", max_length=128)
     full_name: str = Field(default="", max_length=255)
     organization: str = Field(default="", max_length=255)
     website: str = Field(default="", max_length=500)
@@ -52,6 +56,13 @@ class AdminApplyIn(Schema):
     @classmethod
     def _validate_website(cls, value: str) -> str:
         return _normalize_website(value)
+
+    @field_validator("password")
+    @classmethod
+    def _validate_password(cls, value: str) -> str:
+        if value and len(value) < 8:
+            raise ValueError("password must be at least 8 characters")
+        return value
 
 
 class AdminRegisterIn(Schema):

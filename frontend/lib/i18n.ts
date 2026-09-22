@@ -530,6 +530,8 @@ const en = {
   "adminApply.alreadySubtitle": "Your application is with the owner.",
   "adminApply.statusLabel": "Status",
   "adminApply.alreadyHint": "You will be able to access the admin area once the owner approves your application.",
+  "adminApply.passwordHint": "No account yet? One is created with this password so you can sign in right away.",
+  "adminApply.passwordRequired": "Choose a password of at least 8 characters.",
 
   // ---- Admin Registration (new account) ----
   "adminRegister.title": "Register as an Admin",
@@ -1096,6 +1098,8 @@ const ar: Record<MessageKey, string> = {
   "adminApply.alreadySubtitle": "طلبك قيد المراجعة من قبل المالك.",
   "adminApply.statusLabel": "الحالة",
   "adminApply.alreadyHint": "ستتمكن من الوصول إلى منطقة المشرفين بعد موافقة المالك على طلبك.",
+  "adminApply.passwordHint": "ليس لديك حساب؟ سيتم إنشاء حساب بهذه الكلمة ليمكنك الدخول فوراً.",
+  "adminApply.passwordRequired": "اختر كلمة مرور من 8 أحرف على الأقل.",
 
   // ---- تسجيل المشرف (حساب جديد) ----
   "adminRegister.title": "سجّل كمشرف",

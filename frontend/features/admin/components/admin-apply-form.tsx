@@ -30,9 +30,12 @@ import type { AdminApplication } from "../types";
  * - Organization admin ("org") — NGOs/organizations that publish directly.
  *
  * When signed in, the email/name are prefilled from the account and the
- * application is linked to it — no second account is ever created. If the
- * user already has an application, its status is shown instead of a duplicate.
- * Website is optional in both flows.
+ * application is linked to it — no second account is ever created and their
+ * password is never changed. A visitor with no account can still apply: the
+ * password they enter here creates a normal account for them (no admin access)
+ * that they can sign in with straight away, while the owner reviews the pending
+ * application. If the user already has an application, its status is shown
+ * instead of a duplicate. Website is optional in both flows.
  */
 export function AdminApplyForm() {
   const { user, hydrated } = useAuth();
@@ -62,6 +65,7 @@ function ApplyFormBody({ user }: { user: ReturnType<typeof useAuth>["user"] }) {
   // Prefill once from the signed-in account.
   const [email, setEmail] = useState(() => user?.email ?? "");
   const [fullName, setFullName] = useState(() => user?.full_name ?? "");
+  const [password, setPassword] = useState("");
   const [organization, setOrganization] = useState("");
   const [website, setWebsite] = useState("");
   const [position, setPosition] = useState("");
@@ -94,10 +98,19 @@ function ApplyFormBody({ user }: { user: ReturnType<typeof useAuth>["user"] }) {
       toast.error(t("adminApply.organizationRequired"));
       return;
     }
+    // Applying without an account creates one, so a password is required to be
+    // able to sign in afterwards.
+    if (!user && password.length < 8) {
+      toast.error(t("adminApply.passwordRequired"));
+      return;
+    }
     setSubmitting(true);
     try {
       const app = await applyApi.apply({
         email,
+        // Only a visitor with no account sends a password; a signed-in user's
+        // password must never be touched by applying.
+        password: user ? undefined : password,
         full_name: fullName,
         organization,
         website,
@@ -114,8 +127,8 @@ function ApplyFormBody({ user }: { user: ReturnType<typeof useAuth>["user"] }) {
       toast.success(t("adminApply.success"));
     } catch (error) {
       // Show the required generic message; when the backend returned a useful
-      // reason (e.g. "no account for this email"), surface it as the detail so
-      // genuine validation/account errors are never masked.
+      // reason (e.g. a validation error), surface it as the detail so genuine
+      // errors are never masked.
       const detail =
         error instanceof Error && error.message && !/failed to fetch|load failed|networkerror/i.test(error.message)
           ? error.message
@@ -216,6 +229,25 @@ function ApplyFormBody({ user }: { user: ReturnType<typeof useAuth>["user"] }) {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+
+          {/* Visitors with no account get one created by this form. */}
+          {!user ? (
+            <div className="space-y-2">
+              <Label htmlFor="apply-password">{t("auth.password")}</Label>
+              <Input
+                id="apply-password"
+                type="password"
+                required
+                minLength={8}
+                dir="ltr"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("adminApply.passwordHint")}
+              </p>
+            </div>
+          ) : null}
 
           {requestType === "org" && (
             <div className="space-y-2">

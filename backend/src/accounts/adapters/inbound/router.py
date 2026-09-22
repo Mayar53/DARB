@@ -75,14 +75,17 @@ def _optional_principal(request) -> AuthPrincipal | None:
 
 @router.post("/admin-apply", response={201: s.AdminApplicationOut, 200: s.AdminApplicationOut})
 def admin_apply(request, payload: s.AdminApplyIn):
-    """Apply for admin access.
+    """Apply for admin access (public — no login required).
 
     When called by a signed-in user, the application is linked to their
-    existing account (no second account is created) and approving it upgrades
-    that account in place. When called without a token, the application is
-    stored by email and stays visible to the owner, but there is no account to
-    upgrade. If the email already has an application, it is returned unchanged
-    (no duplicates).
+    existing account (no second account is created, and their password is left
+    alone) and approving it upgrades that account in place. When called without
+    a token and the email has no account yet, a normal account is created for
+    the applicant (role=user — no admin access) using the submitted password so
+    they can sign in right away; with no password it is created passwordless
+    and they set one later via "forgot password". Either way the application is
+    linked, so the owner can approve it in place. If the email already has an
+    application, it is returned unchanged (no duplicates).
     """
     principal = _optional_principal(request)
     application = container().apply_for_admin.execute(

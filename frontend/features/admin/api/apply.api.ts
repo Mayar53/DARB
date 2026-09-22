@@ -5,15 +5,20 @@ import type { AdminApplication } from "../types";
 /**
  * Admin application endpoints.
  *
- * `apply` is public-ish: when called with a valid JWT the backend links the
+ * `apply` is public: when called with a valid JWT the backend links the
  * application to the caller's existing account (no second account is created).
- * When called without a token it stores the application by email.
+ * When called without a token and the email has no account yet, the backend
+ * creates a normal account for the applicant and links the application to it —
+ * `password` is used for that new account so they can sign in immediately (with
+ * no password the account is passwordless and "forgot password" sets one).
+ * An existing account's password is never changed.
  * `request_type` selects the flow: "admin" (researcher) or "org" (organization
  * admin). Website is optional in both.
  */
 export const applyApi = {
   apply: (data: {
     email: string;
+    password?: string;
     full_name: string;
     organization?: string;
     website?: string;

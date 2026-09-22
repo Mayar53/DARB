@@ -146,14 +146,124 @@ def test_existing_user_applies_admin_linked_to_same_account():
 
 
 @pytest.mark.django_db
-def test_apply_requires_existing_account():
+def test_apply_without_account_creates_passwordless_account(owner_tokens):
+    """A visitor with no account can still apply: a normal, passwordless
+    account is created and the PENDING application is linked to it, so the
+    owner can approve it in place (no error for the applicant)."""
     client = Client()
     res = client.post(
         "/api/auth/admin-apply",
-        data={"email": "noaccount@example.com", "full_name": "Nobody"},
+        data={"email": "fresh@example.com", "full_name": "Fresh Applicant"},
         content_type="application/json",
     )
-    assert res.status_code == 404, res.content  # no user -> cannot apply
+    assert res.status_code == 201, res.content
+    body = res.json()
+    assert body["status"] == "pending"
+    assert body["user_id"] is not None
+
+    from src.accounts.adapters.outbound.admin_application_models import AdminApplication
+    from src.accounts.adapters.outbound.orm_models import UserModel
+
+    # Exactly one account, created as a normal user with no admin access.
+    assert UserModel.objects.filter(email="fresh@example.com").count() == 1
+    user = UserModel.objects.get(email="fresh@example.com")
+    assert user.role == "user"
+    assert user.is_staff is False
+    row = AdminApplication.objects.get(email="fresh@example.com")
+    assert row.user_id == user.id
+
+    # Passwordless: no password works until the applicant resets it.
+    assert _login(client, "fresh@example.com", "supersecret1").status_code == 401
+
+    # The owner can approve the linked application in place.
+    app_id = client.get("/api/auth/admin-applications", headers=_h(owner_tokens)).json()[0]["id"]
+    approved = client.post(
+        f"/api/auth/admin-applications/{app_id}/approve", headers=_h(owner_tokens)
+    )
+    assert approved.status_code == 200, approved.content
+    user.refresh_from_db()
+    assert user.role == "admin"
+    assert user.is_staff is True
+
+
+@pytest.mark.django_db
+def test_apply_anonymous_does_not_duplicate_account():
+    """Re-submitting the same email returns the same application and never
+    creates a second account."""
+    client = Client()
+    first = client.post(
+        "/api/auth/admin-apply",
+        data={"email": "fresh2@example.com", "full_name": "Fresh Two"},
+        content_type="application/json",
+    )
+    assert first.status_code == 201
+    second = client.post(
+        "/api/auth/admin-apply",
+        data={"email": "fresh2@example.com", "full_name": "Fresh Two"},
+        content_type="application/json",
+    )
+    assert second.status_code == 201
+    assert second.json()["id"] == first.json()["id"]
+
+    from src.accounts.adapters.outbound.admin_application_models import AdminApplication
+    from src.accounts.adapters.outbound.orm_models import UserModel
+    assert UserModel.objects.filter(email="fresh2@example.com").count() == 1
+    assert AdminApplication.objects.filter(email="fresh2@example.com").count() == 1
+
+
+@pytest.mark.django_db
+def test_apply_with_password_creates_usable_account():
+    """An anonymous applicant who supplies a password gets a normal account they
+    can sign in with immediately, alongside the PENDING application."""
+    client = Client()
+    res = client.post(
+        "/api/auth/admin-apply",
+        data={"email": "withpw@example.com", "password": "supersecret1",
+              "full_name": "With Password"},
+        content_type="application/json",
+    )
+    assert res.status_code == 201, res.content
+    body = res.json()
+    assert body["status"] == "pending"
+    assert body["user_id"] is not None
+
+    # Usable straight away — but only as a normal (non-admin) user.
+    login = _login(client, "withpw@example.com", "supersecret1")
+    assert login.status_code == 200, login.content
+    assert login.json()["user"]["role"] == "user"
+    assert login.json()["user"]["is_staff"] is False
+
+
+@pytest.mark.django_db
+def test_apply_never_changes_existing_password():
+    """Applying must never rewrite an existing account's password — otherwise
+    anyone could take over an account by applying with its email."""
+    client = Client()
+    _register(client, email="keep@example.com", password="supersecret1", full_name="Keep Me")
+    headers = _h(_login(client, "keep@example.com").json()["tokens"])
+
+    res = client.post(
+        "/api/auth/admin-apply",
+        data={"email": "keep@example.com", "password": "attackerpass1", "full_name": "Keep Me"},
+        content_type="application/json",
+        headers=headers,
+    )
+    assert res.status_code == 201, res.content
+
+    # The real password still works; the supplied one does not.
+    assert _login(client, "keep@example.com", "supersecret1").status_code == 200
+    assert _login(client, "keep@example.com", "attackerpass1").status_code == 401
+
+
+@pytest.mark.django_db
+def test_apply_rejects_short_password():
+    client = Client()
+    res = client.post(
+        "/api/auth/admin-apply",
+        data={"email": "shortpw@example.com", "password": "short", "full_name": "Short"},
+        content_type="application/json",
+    )
+    assert res.status_code == 422
 
 
 @pytest.mark.django_db
