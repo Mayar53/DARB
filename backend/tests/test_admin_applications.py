@@ -94,6 +94,13 @@ def user_tokens():
     return login.json()["tokens"]
 
 
+# A valid "why do you want to join?" answer — the API requires 10-100 words.
+REASON = (
+    "I want to help Darb reach more students with high quality opportunities "
+    "and I have experience running similar programs in my community."
+)
+
+
 def _h(tokens): return {"Authorization": f"Bearer {tokens['access_token']}"}
 
 
@@ -122,7 +129,7 @@ def test_existing_user_applies_admin_linked_to_same_account():
     res = client.post(
         "/api/auth/admin-apply",
         data={"email": "mayar@example.com", "full_name": "Mayar Ali",
-              "organization": "Youth NGO", "reason": "We run training programs"},
+              "organization": "Youth NGO", "reason": REASON},
         content_type="application/json",
         headers=headers,
     )
@@ -153,7 +160,7 @@ def test_apply_without_account_creates_passwordless_account(owner_tokens):
     client = Client()
     res = client.post(
         "/api/auth/admin-apply",
-        data={"email": "fresh@example.com", "full_name": "Fresh Applicant"},
+        data={"email": "fresh@example.com", "full_name": "Fresh Applicant", "reason": REASON},
         content_type="application/json",
     )
     assert res.status_code == 201, res.content
@@ -193,13 +200,13 @@ def test_apply_anonymous_does_not_duplicate_account():
     client = Client()
     first = client.post(
         "/api/auth/admin-apply",
-        data={"email": "fresh2@example.com", "full_name": "Fresh Two"},
+        data={"email": "fresh2@example.com", "full_name": "Fresh Two", "reason": REASON},
         content_type="application/json",
     )
     assert first.status_code == 201
     second = client.post(
         "/api/auth/admin-apply",
-        data={"email": "fresh2@example.com", "full_name": "Fresh Two"},
+        data={"email": "fresh2@example.com", "full_name": "Fresh Two", "reason": REASON},
         content_type="application/json",
     )
     assert second.status_code == 201
@@ -219,7 +226,7 @@ def test_apply_with_password_creates_usable_account():
     res = client.post(
         "/api/auth/admin-apply",
         data={"email": "withpw@example.com", "password": "supersecret1",
-              "full_name": "With Password"},
+              "full_name": "With Password", "reason": REASON},
         content_type="application/json",
     )
     assert res.status_code == 201, res.content
@@ -244,7 +251,8 @@ def test_apply_never_changes_existing_password():
 
     res = client.post(
         "/api/auth/admin-apply",
-        data={"email": "keep@example.com", "password": "attackerpass1", "full_name": "Keep Me"},
+        data={"email": "keep@example.com", "password": "attackerpass1",
+              "full_name": "Keep Me", "reason": REASON},
         content_type="application/json",
         headers=headers,
     )
@@ -260,10 +268,46 @@ def test_apply_rejects_short_password():
     client = Client()
     res = client.post(
         "/api/auth/admin-apply",
-        data={"email": "shortpw@example.com", "password": "short", "full_name": "Short"},
+        data={"email": "shortpw@example.com", "password": "short",
+              "full_name": "Short", "reason": REASON},
         content_type="application/json",
     )
     assert res.status_code == 422
+
+
+@pytest.mark.django_db
+def test_apply_reason_is_required_and_10_to_100_words():
+    """The reason is required and must be between 10 and 100 words."""
+    client = Client()
+    base = {"email": "reason@example.com", "full_name": "Reason Tester"}
+
+    # Missing entirely.
+    missing = client.post("/api/auth/admin-apply", data=base, content_type="application/json")
+    assert missing.status_code == 422
+
+    # Nine words — one short of the minimum.
+    too_short = client.post(
+        "/api/auth/admin-apply",
+        data={**base, "reason": " ".join(["word"] * 9)},
+        content_type="application/json",
+    )
+    assert too_short.status_code == 422
+
+    # 101 words — one over the maximum.
+    too_long = client.post(
+        "/api/auth/admin-apply",
+        data={**base, "reason": " ".join(["word"] * 101)},
+        content_type="application/json",
+    )
+    assert too_long.status_code == 422
+
+    # Exactly 10 words is accepted.
+    ok = client.post(
+        "/api/auth/admin-apply",
+        data={**base, "reason": " ".join(["word"] * 10)},
+        content_type="application/json",
+    )
+    assert ok.status_code == 201, ok.content
 
 
 @pytest.mark.django_db
@@ -273,14 +317,14 @@ def test_duplicate_application_returns_existing():
     headers = _h(_login(client, "mayar@example.com").json()["tokens"])
     first = client.post(
         "/api/auth/admin-apply",
-        data={"email": "mayar@example.com", "full_name": "Mayar Ali", "reason": "one"},
+        data={"email": "mayar@example.com", "full_name": "Mayar Ali", "reason": REASON},
         content_type="application/json",
         headers=headers,
     )
     assert first.status_code == 201
     second = client.post(
         "/api/auth/admin-apply",
-        data={"email": "mayar@example.com", "full_name": "Mayar Ali", "reason": "two"},
+        data={"email": "mayar@example.com", "full_name": "Mayar Ali", "reason": REASON},
         content_type="application/json",
         headers=headers,
     )
@@ -297,7 +341,8 @@ def test_owner_waitlists_then_approves(owner_tokens):
     _register(client)
     headers = _h(_login(client, "mayar@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
-                data={"email": "mayar@example.com", "full_name": "Mayar Ali"},
+                data={"email": "mayar@example.com", "full_name": "Mayar Ali",
+                      "reason": REASON},
                 content_type="application/json", headers=headers)
 
     listing = client.get("/api/auth/admin-applications", headers=_h(owner_tokens))
@@ -337,7 +382,8 @@ def test_owner_can_move_waitlisted_back_to_pending(owner_tokens):
     _register(client)
     headers = _h(_login(client, "mayar@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
-                data={"email": "mayar@example.com", "full_name": "Mayar Ali"},
+                data={"email": "mayar@example.com", "full_name": "Mayar Ali",
+                      "reason": REASON},
                 content_type="application/json", headers=headers)
     app_id = client.get("/api/auth/admin-applications", headers=_h(owner_tokens)).json()[0]["id"]
 
@@ -368,7 +414,8 @@ def test_status_flow_persists_same_record(owner_tokens):
     _register(client)
     headers = _h(_login(client, "mayar@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
-                data={"email": "mayar@example.com", "full_name": "Mayar Ali"},
+                data={"email": "mayar@example.com", "full_name": "Mayar Ali",
+                      "reason": REASON},
                 content_type="application/json", headers=headers)
     app_id = client.get("/api/auth/admin-applications", headers=_h(owner_tokens)).json()[0]["id"]
 
@@ -406,7 +453,8 @@ def test_approve_upgrades_existing_user_no_second_account(owner_tokens):
     _register(client)
     headers = _h(_login(client, "mayar@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
-                data={"email": "mayar@example.com", "full_name": "Mayar Ali"},
+                data={"email": "mayar@example.com", "full_name": "Mayar Ali",
+                      "reason": REASON},
                 content_type="application/json", headers=headers)
     app_id = client.get("/api/auth/admin-applications", headers=_h(owner_tokens)).json()[0]["id"]
     approved = client.post(f"/api/auth/admin-applications/{app_id}/approve", headers=_h(owner_tokens))
@@ -426,7 +474,8 @@ def test_list_applications_owner_only(user_tokens):
     _register(client)
     headers = _h(_login(client, "mayar@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
-                data={"email": "mayar@example.com", "full_name": "Mayar Ali"},
+                data={"email": "mayar@example.com", "full_name": "Mayar Ali",
+                      "reason": REASON},
                 content_type="application/json", headers=headers)
     denied = client.get("/api/auth/admin-applications", headers=_h(user_tokens))
     assert denied.status_code == 403
@@ -438,7 +487,8 @@ def test_waitlist_owner_only(user_tokens):
     _register(client)
     headers = _h(_login(client, "mayar@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
-                data={"email": "mayar@example.com", "full_name": "Mayar Ali"},
+                data={"email": "mayar@example.com", "full_name": "Mayar Ali",
+                      "reason": REASON},
                 content_type="application/json", headers=headers)
     denied = client.post("/api/auth/admin-applications/1/waitlist", headers=_h(user_tokens))
     assert denied.status_code == 403
@@ -456,7 +506,8 @@ def test_my_admin_application_endpoint():
     assert res.json() is None
 
     client.post("/api/auth/admin-apply",
-                data={"email": "mayar@example.com", "full_name": "Mayar Ali"},
+                data={"email": "mayar@example.com", "full_name": "Mayar Ali",
+                      "reason": REASON},
                 content_type="application/json", headers=headers)
     res = client.get("/api/auth/my-admin-application", headers=headers)
     assert res.status_code == 200
@@ -499,7 +550,7 @@ def test_org_request_created_with_request_type():
         "/api/auth/admin-apply",
         data={"email": "org@example.com", "full_name": "Org Rep",
               "organization": "Example Youth NGO", "website": "", "request_type": "org",
-              "reason": "We want to publish opportunities"},
+              "reason": REASON},
         content_type="application/json",
         headers=headers,
     )
@@ -513,7 +564,8 @@ def test_org_request_created_with_request_type():
     # A separate research request for the same email returns the existing one.
     res2 = client.post(
         "/api/auth/admin-apply",
-        data={"email": "org@example.com", "full_name": "Org Rep", "request_type": "admin"},
+        data={"email": "org@example.com", "full_name": "Org Rep",
+              "request_type": "admin", "reason": REASON},
         content_type="application/json",
         headers=headers,
     )
@@ -529,14 +581,15 @@ def test_owner_lists_request_types_separately(owner_tokens):
     h_res = _h(_login(client, "res@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
                 data={"email": "res@example.com", "full_name": "Researcher",
-                      "request_type": "admin"},
+                      "request_type": "admin", "reason": REASON},
                 content_type="application/json", headers=h_res)
     # Org application
     _register(client, email="org2@example.com", full_name="Org Rep")
     h_org = _h(_login(client, "org2@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
                 data={"email": "org2@example.com", "full_name": "Org Rep",
-                      "organization": "Green NGO", "request_type": "org"},
+                      "organization": "Green NGO", "request_type": "org",
+                      "reason": REASON},
                 content_type="application/json", headers=h_org)
 
     owner = _h(owner_tokens)
@@ -555,7 +608,8 @@ def test_org_approval_makes_org_admin_and_creates_org(owner_tokens):
     headers = _h(_login(client, "org3@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
                 data={"email": "org3@example.com", "full_name": "Org Rep",
-                      "organization": "Example Youth NGO", "request_type": "org"},
+                      "organization": "Example Youth NGO", "request_type": "org",
+                      "reason": REASON},
                 content_type="application/json", headers=headers)
     app_id = client.get(
         "/api/auth/admin-applications?request_type=org",
@@ -594,7 +648,7 @@ def test_research_approval_makes_admin(owner_tokens):
     headers = _h(_login(client, "res2@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
                 data={"email": "res2@example.com", "full_name": "Researcher",
-                      "request_type": "admin"},
+                      "request_type": "admin", "reason": REASON},
                 content_type="application/json", headers=headers)
     app_id = client.get(
         "/api/auth/admin-applications?request_type=admin",
@@ -704,7 +758,8 @@ def test_owner_can_decline_application(owner_tokens):
     _register(client)
     headers = _h(_login(client, "mayar@example.com").json()["tokens"])
     client.post("/api/auth/admin-apply",
-                data={"email": "mayar@example.com", "full_name": "Mayar Ali"},
+                data={"email": "mayar@example.com", "full_name": "Mayar Ali",
+                      "reason": REASON},
                 content_type="application/json", headers=headers)
     app_id = client.get("/api/auth/admin-applications", headers=_h(owner_tokens)).json()[0]["id"]
 

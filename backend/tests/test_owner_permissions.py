@@ -21,6 +21,13 @@ from src.opportunities.container import container as opportunities_container
 from src.opportunities.application.use_cases import OpportunityCommand
 
 
+# A valid "why do you want to join?" answer — the API requires 10-100 words.
+REASON = (
+    "I want to help Darb publish more opportunities for students "
+    "in my region and my community."
+)
+
+
 def _make_admin(email, full_name="Admin", permissions=None):
     user = accounts_container().users.add_admin(
         email=email,
@@ -128,7 +135,7 @@ def test_regular_admin_cannot_review_applications():
     user_headers = _h(login.json()["tokens"])
     client.post(
         "/api/auth/admin-apply",
-        data={"email": "mayar@example.com", "full_name": "Mayar", "reason": "x"},
+        data={"email": "mayar@example.com", "full_name": "Mayar", "reason": REASON},
         content_type="application/json",
         headers=user_headers,
     )
@@ -156,7 +163,8 @@ def test_owner_can_review_applications():
     user_headers = _h(login.json()["tokens"])
     client.post(
         "/api/auth/admin-apply",
-        data={"email": "mayar@example.com", "full_name": "Mayar", "organization": "Green Iraq", "reason": "x"},
+        data={"email": "mayar@example.com", "full_name": "Mayar",
+              "organization": "Green Iraq", "reason": REASON},
         content_type="application/json",
         headers=user_headers,
     )
@@ -297,7 +305,7 @@ def test_org_created_from_application_on_register():
             "organization": "Green Iraq",
             "website": "https://greeniraq.example",
             "position": "Coordinator",
-            "reason": "We plant trees",
+            "reason": REASON,
         },
         content_type="application/json",
         headers=user_headers,

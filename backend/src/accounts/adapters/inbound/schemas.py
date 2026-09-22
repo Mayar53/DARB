@@ -48,7 +48,8 @@ class AdminApplyIn(Schema):
     organization: str = Field(default="", max_length=255)
     website: str = Field(default="", max_length=500)
     position: str = Field(default="", max_length=255)
-    reason: str = Field(default="", max_length=2000)
+    # Required: the applicant must say why they want to join (10-100 words).
+    reason: str = Field(max_length=2000)
     # "admin" (researcher) | "org" (organization admin)
     request_type: str = Field(default="admin", max_length=16)
 
@@ -62,6 +63,16 @@ class AdminApplyIn(Schema):
     def _validate_password(cls, value: str) -> str:
         if value and len(value) < 8:
             raise ValueError("password must be at least 8 characters")
+        return value
+
+    @field_validator("reason")
+    @classmethod
+    def _validate_reason(cls, value: str) -> str:
+        words = len(value.split())
+        if words < 10:
+            raise ValueError("reason must be at least 10 words")
+        if words > 100:
+            raise ValueError("reason must be at most 100 words")
         return value
 
 

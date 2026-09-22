@@ -37,6 +37,12 @@ import type { AdminApplication } from "../types";
  * application. If the user already has an application, its status is shown
  * instead of a duplicate. Website is optional in both flows.
  */
+
+/** Words = whitespace-separated tokens (matches the backend rule). */
+function countWords(value: string): number {
+  return value.trim().split(/\s+/).filter(Boolean).length;
+}
+
 export function AdminApplyForm() {
   const { user, hydrated } = useAuth();
 
@@ -102,6 +108,16 @@ function ApplyFormBody({ user }: { user: ReturnType<typeof useAuth>["user"] }) {
     // able to sign in afterwards.
     if (!user && password.length < 8) {
       toast.error(t("adminApply.passwordRequired"));
+      return;
+    }
+    // "Why do you want to join?" is required and must be 10-100 words.
+    const reasonWords = countWords(reason);
+    if (reasonWords < 10) {
+      toast.error(t("adminApply.reasonTooShort"));
+      return;
+    }
+    if (reasonWords > 100) {
+      toast.error(t("adminApply.reasonTooLong"));
       return;
     }
     setSubmitting(true);
@@ -286,11 +302,15 @@ function ApplyFormBody({ user }: { user: ReturnType<typeof useAuth>["user"] }) {
             <Label htmlFor="apply-reason">{t("adminApply.reason")}</Label>
             <textarea
               id="apply-reason"
+              required
               rows={4}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
+            <p className="text-xs text-muted-foreground">
+              {t("adminApply.reasonHint")} ({countWords(reason)})
+            </p>
           </div>
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? t("adminApply.sending") : t("adminApply.submit")}
