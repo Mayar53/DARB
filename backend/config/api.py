@@ -32,7 +32,7 @@ from src.shared.domain.exceptions import (
     ValidationError as DomainValidationError,
 )
 
-api = NinjaAPI(title="Karkh API", version="1.0.0", description="Hexagonal Django + Ninja backend")
+api = NinjaAPI(title="Darb API", version="1.0.0", description="Darb opportunities backend")
 
 # --------------------------------------------------------------------------- #
 # Feature routers

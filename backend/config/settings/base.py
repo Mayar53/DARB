@@ -54,9 +54,9 @@ INSTALLED_APPS = [
 
 # django-unfold admin theme
 UNFOLD = {
-    "SITE_TITLE": "Template Admin",
-    "SITE_HEADER": "Template Admin",
-    "SITE_SUBHEADER": "Backend administration",
+    "SITE_TITLE": "Darb Admin",
+    "SITE_HEADER": "Darb",
+    "SITE_SUBHEADER": "Opportunities administration",
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": False,
 }
