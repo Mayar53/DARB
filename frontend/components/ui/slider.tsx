@@ -40,16 +40,27 @@ function Slider({
       min={min}
       max={max}
       className={cn(
-        "relative flex w-full touch-none items-center select-none py-2 data-disabled:opacity-50",
+        "relative flex w-full touch-none items-center select-none data-disabled:opacity-50",
         className
       )}
       {...props}
     >
+      {/* The track is a tall, invisible tap band; the visible rail is drawn
+          inside it, so the control stays a thin line but is easy to hit with a
+          thumb. No transform/height is set on the Range beyond the rail's
+          inset, which keeps Radix's own inline positioning untouched. */}
       <SliderPrimitive.Track
         data-slot="slider-track"
-        className="relative h-2 w-full grow overflow-hidden rounded-full bg-muted"
+        className="relative h-6 w-full grow rounded-full"
       >
-        <SliderPrimitive.Range data-slot="slider-range" className="absolute h-full bg-primary" />
+        <span
+          data-slot="slider-rail"
+          className="pointer-events-none absolute inset-x-0 inset-y-2 rounded-full bg-muted"
+        />
+        <SliderPrimitive.Range
+          data-slot="slider-range"
+          className="absolute inset-y-2 rounded-full bg-primary"
+        />
       </SliderPrimitive.Track>
       {values.map((_, index) => (
         <SliderPrimitive.Thumb
