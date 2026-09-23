@@ -337,6 +337,75 @@ def test_owner_can_create_organization():
     assert created.json()["name"] == "New NGO"
 
 
+@pytest.mark.django_db
+def test_owner_can_edit_organization():
+    """The owner can fix an NGO's name, website and description. The row used to
+    be frozen once created — there was no update path at all."""
+    _make_owner()
+    client, tokens = _login("boss@example.com")
+    created = client.post(
+        "/api/auth/organizations",
+        data={"name": "Typo NGO", "website": "", "description": ""},
+        content_type="application/json",
+        headers=_h(tokens),
+    )
+    org_id = created.json()["id"]
+
+    updated = client.patch(
+        f"/api/auth/organizations/{org_id}",
+        data={"name": "Fixed NGO", "website": "example.com", "description": "We plant trees."},
+        content_type="application/json",
+        headers=_h(tokens),
+    )
+    assert updated.status_code == 200, updated.content
+    body = updated.json()
+    assert body["name"] == "Fixed NGO"
+    assert body["website"] == "https://example.com"  # lenient normaliser
+    assert body["description"] == "We plant trees."
+
+    # Junk in the website field is rejected rather than saved as a broken link.
+    bad = client.patch(
+        f"/api/auth/organizations/{org_id}",
+        data={"website": "not a url"},
+        content_type="application/json",
+        headers=_h(tokens),
+    )
+    assert bad.status_code == 422
+
+    # Renaming onto another NGO's name is a 409, not a crash on the unique index.
+    client.post(
+        "/api/auth/organizations",
+        data={"name": "Other NGO", "website": "", "description": ""},
+        content_type="application/json",
+        headers=_h(tokens),
+    )
+    clash = client.patch(
+        f"/api/auth/organizations/{org_id}",
+        data={"name": "Other NGO"},
+        content_type="application/json",
+        headers=_h(tokens),
+    )
+    assert clash.status_code == 409
+
+    # A partial edit leaves the fields it did not send alone.
+    listing = client.get("/api/auth/organizations", headers=_h(tokens)).json()
+    row = next(o for o in listing if o["id"] == org_id)
+    assert row["name"] == "Fixed NGO"
+    assert row["website"] == "https://example.com"
+    assert row["description"] == "We plant trees."
+
+    # Non-owner admins cannot edit.
+    _make_admin("edit-denied@example.com")
+    _, admin_tokens = _login("edit-denied@example.com")
+    denied = client.patch(
+        f"/api/auth/organizations/{org_id}",
+        data={"name": "Nope"},
+        content_type="application/json",
+        headers=_h(admin_tokens),
+    )
+    assert denied.status_code == 403
+
+
 # --------------------------------------------------------------------------- #
 # Opportunity statuses
 # --------------------------------------------------------------------------- #

@@ -41,6 +41,7 @@ from src.accounts.application.use_cases import (
     ResetPassword,
     ReviewAdminApplication,
     UpdateAdmin,
+    UpdateOrganization,
     UpdateProfile,
 )
 from src.opportunities.adapters.outbound.repositories import DjangoOpportunityRepository
@@ -118,6 +119,10 @@ class AccountsContainer:
     @property
     def create_organization(self) -> CreateOrganization:
         return CreateOrganization(self.organizations)
+
+    @property
+    def update_organization(self) -> UpdateOrganization:
+        return UpdateOrganization(self.organizations)
 
     @property
     def authenticate_user(self) -> AuthenticateUser:

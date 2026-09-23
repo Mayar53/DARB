@@ -201,6 +201,24 @@ class OrganizationIn(Schema):
     description: str = Field(default="", max_length=2000)
 
 
+class OrganizationUpdateIn(Schema):
+    """OWNER edit of an organization/NGO. Omitted fields are left unchanged.
+
+    Website goes through the same lenient normaliser as the admin-application
+    forms, so "example.com" is stored as "https://example.com" and junk is
+    rejected rather than saved as a broken link.
+    """
+
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    website: str | None = Field(default=None, max_length=500)
+    description: str | None = Field(default=None, max_length=2000)
+
+    @field_validator("website")
+    @classmethod
+    def _validate_website(cls, value: str | None) -> str | None:
+        return None if value is None else _normalize_website(value)
+
+
 class AdminUpdateIn(Schema):
     """OWNER management of an admin: activate/deactivate + permissions."""
 

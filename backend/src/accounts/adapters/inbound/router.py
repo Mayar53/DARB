@@ -16,6 +16,7 @@ from src.accounts.application.use_cases import (
     AdminUpdateCommand,
     CreateApplicationForUserCommand,
     LoginCommand,
+    OrganizationUpdateCommand,
     RegisterCommand,
     ResetPasswordCommand,
     ReviewAdminApplicationCommand,
@@ -317,6 +318,23 @@ def create_organization(request, payload: s.OrganizationIn):
         Organization(name=payload.name, website=payload.website, description=payload.description)
     )
     return Status(201, org)
+
+
+@router.patch("/organizations/{organization_id}", auth=jwt_auth, response=s.OrganizationOut)
+def update_organization(request, organization_id: int, payload: s.OrganizationUpdateIn):
+    """Edit an organization/NGO's name, website or description. OWNER-only.
+
+    Organizations are created from approved org applications (or by naming one
+    on an opportunity) and were frozen once created, so a typo or a missing
+    website could never be corrected. Only the fields sent are changed.
+    """
+    _require_owner(request)
+    return container().update_organization.execute(
+        OrganizationUpdateCommand(
+            organization_id=organization_id,
+            **payload.model_dump(exclude_unset=True),
+        )
+    )
 
 
 @router.get("/users/{user_id}/public", response=s.PublicProfileOut)

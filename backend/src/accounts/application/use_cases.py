@@ -18,6 +18,8 @@ from src.accounts.domain.exceptions import (
     ApplicationNotFound,
     EmailAlreadyUsed,
     InvalidCredentials,
+    OrganizationNameTaken,
+    OrganizationNotFound,
     ResetCodeInvalid,
     UserNotFound,
 )
@@ -589,6 +591,44 @@ class CreateOrganization(UseCase[Organization, Organization]):
             website=data.website,
             description=data.description,
         )
+
+
+@dataclass(frozen=True)
+class OrganizationUpdateCommand:
+    organization_id: int
+    name: str | None = None
+    website: str | None = None
+    description: str | None = None
+
+
+class UpdateOrganization(UseCase[OrganizationUpdateCommand, Organization]):
+    """OWNER: edit an organization/NGO (name, website, description).
+
+    Organizations are created from approved org applications and by naming one
+    on an opportunity; until now a row was frozen once created, so a typo or a
+    missing website could never be corrected. Omitted fields are left as-is.
+    """
+
+    def __init__(self, organizations: OrganizationRepository) -> None:
+        self._organizations = organizations
+
+    def execute(self, data: OrganizationUpdateCommand) -> Organization:
+        name = data.name.strip() if data.name is not None else None
+        if name is not None:
+            # `name` is unique — give a clear 409 instead of an IntegrityError.
+            existing = self._organizations.get_by_name(name)
+            if existing is not None and existing.id != data.organization_id:
+                raise OrganizationNameTaken()
+
+        updated = self._organizations.update(
+            data.organization_id,
+            name=name,
+            website=data.website,
+            description=data.description,
+        )
+        if updated is None:
+            raise OrganizationNotFound()
+        return updated
 
 
 @dataclass(frozen=True)

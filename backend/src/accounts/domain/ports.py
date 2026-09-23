@@ -136,6 +136,16 @@ class OrganizationRepository(ABC):
     def create(self, *, name: str, website: str = "", description: str = "") -> Organization: ...
 
     @abstractmethod
+    def update(
+        self,
+        organization_id: int,
+        *,
+        name: str | None = None,
+        website: str | None = None,
+        description: str | None = None,
+    ) -> Organization | None: ...
+
+    @abstractmethod
     def get_by_id(self, organization_id: int) -> Organization | None: ...
 
     @abstractmethod

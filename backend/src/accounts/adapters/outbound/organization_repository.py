@@ -19,6 +19,27 @@ class DjangoOrganizationRepository(OrganizationRepository):
         row = OrganizationModel.objects.filter(pk=organization_id).first()
         return self._to_entity(row) if row else None
 
+    def update(
+        self,
+        organization_id: int,
+        *,
+        name: str | None = None,
+        website: str | None = None,
+        description: str | None = None,
+    ) -> Organization | None:
+        """Edit an organization in place. Omitted fields are left untouched."""
+        row = OrganizationModel.objects.filter(pk=organization_id).first()
+        if row is None:
+            return None
+        if name is not None:
+            row.name = name.strip()
+        if website is not None:
+            row.website = website.strip()
+        if description is not None:
+            row.description = description.strip()
+        row.save(update_fields=["name", "website", "description", "updated_at"])
+        return self._to_entity(row)
+
     def get_by_name(self, name: str) -> Organization | None:
         row = OrganizationModel.objects.filter(name__iexact=name.strip()).first()
         return self._to_entity(row) if row else None

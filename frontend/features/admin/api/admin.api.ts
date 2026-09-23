@@ -53,4 +53,9 @@ export const adminApi = {
 
   // --- Organizations ---
   listOrganizations: () => api.get<Organization[]>("/auth/organizations"),
+  /** Edit an NGO. Only the fields sent are changed. */
+  updateOrganization: (
+    id: number,
+    data: { name?: string; website?: string; description?: string },
+  ) => api.patch<Organization>(`/auth/organizations/${id}`, data),
 };

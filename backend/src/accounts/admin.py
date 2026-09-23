@@ -13,7 +13,7 @@ from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.forms import UserChangeForm
 from unfold.admin import ModelAdmin
 
-from src.accounts.models import AdminApplication, UserModel
+from src.accounts.models import AdminApplication, Organization, UserModel
 
 
 class UserAdminForm(UserChangeForm):
@@ -66,3 +66,18 @@ class AdminApplicationAdmin(ModelAdmin):
     search_fields = ("email", "full_name", "organization")
     ordering = ("-created_at",)
     readonly_fields = ("email", "full_name", "organization", "reason", "created_at", "updated_at")
+
+
+@admin.register(Organization)
+class OrganizationAdmin(ModelAdmin):
+    """View and edit NGOs/organizations.
+
+    Rows are created from approved org applications or by naming one on an
+    opportunity, and there was no editing path anywhere until this was
+    registered — a typo in a name could not be fixed.
+    """
+
+    list_display = ("id", "name", "website", "created_at", "updated_at")
+    search_fields = ("name", "website", "description")
+    ordering = ("name",)
+    readonly_fields = ("created_at", "updated_at")

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Building2,
   Check,
   ChevronDown,
   Clock,
@@ -31,10 +32,11 @@ import type { User } from "@/lib/types";
 
 import { adminApi } from "../api/admin.api";
 import { opportunitiesApi } from "@/features/opportunities/api/opportunities.api";
-import type { Opportunity } from "@/lib/types";
+import type { Opportunity, Organization } from "@/lib/types";
 import type { AdminApplication, AdminLeaderboardEntry, Permission } from "../types";
 import { AdminList } from "./admin-list";
 import { OwnerOpportunities } from "./owner-opportunities";
+import { OwnerOrganizations } from "./owner-organizations";
 import { OwnerUsers } from "./owner-users";
 
 /**
@@ -46,11 +48,18 @@ import { OwnerUsers } from "./owner-users";
  *  Admins         — admin accounts (AdminList) + contribution leaderboard.
  *  Users          — registered general users (OwnerUsers).
  *  Opportunities  — all opportunities by status (OwnerOpportunities).
+ *  Organizations  — NGOs with their opportunity counts + inline editing.
  *
  * Only the OWNER reaches this — the backend enforces it on every call.
  */
 
-type SectionKey = "overview" | "applications" | "admins" | "users" | "opportunities";
+type SectionKey =
+  | "overview"
+  | "applications"
+  | "admins"
+  | "users"
+  | "opportunities"
+  | "organizations";
 
 const SECTIONS: { key: SectionKey; icon: LucideIcon }[] = [
   { key: "overview", icon: LayoutDashboard },
@@ -58,6 +67,7 @@ const SECTIONS: { key: SectionKey; icon: LucideIcon }[] = [
   { key: "admins", icon: ShieldCheck },
   { key: "users", icon: UsersRound },
   { key: "opportunities", icon: LayoutList },
+  { key: "organizations", icon: Building2 },
 ];
 
 /** One ranked leaderboard row, with expandable submitted opportunities. */
@@ -184,13 +194,14 @@ export function AdminDashboard() {
   const [leaderboard, setLeaderboard] = useState<AdminLeaderboardEntry[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allOpportunities, setAllOpportunities] = useState<Opportunity[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       try {
-        const [apps, unapplied, admins, perms, board, users, opps] = await Promise.all([
+        const [apps, unapplied, admins, perms, board, users, opps, orgs] = await Promise.all([
           adminApi.listApplications(),
           adminApi.listUnappliedStaff(),
           adminApi.listAdmins(),
@@ -198,6 +209,7 @@ export function AdminDashboard() {
           adminApi.leaderboard(),
           adminApi.listUsers(),
           opportunitiesApi.listAll(),
+          adminApi.listOrganizations(),
         ]);
         if (cancelled) return;
         setApplications(apps);
@@ -207,6 +219,7 @@ export function AdminDashboard() {
         setLeaderboard(board);
         setAllUsers(users);
         setAllOpportunities(opps);
+        setOrganizations(orgs);
       } catch (error) {
         if (!cancelled) toast.error(error instanceof Error ? error.message : t("admin.dashboardLoadError"));
       } finally {
@@ -224,7 +237,7 @@ export function AdminDashboard() {
     setLoading(true);
     void (async () => {
       try {
-        const [apps, unapplied, admins, perms, board, users, opps] = await Promise.all([
+        const [apps, unapplied, admins, perms, board, users, opps, orgs] = await Promise.all([
           adminApi.listApplications(),
           adminApi.listUnappliedStaff(),
           adminApi.listAdmins(),
@@ -232,6 +245,7 @@ export function AdminDashboard() {
           adminApi.leaderboard(),
           adminApi.listUsers(),
           opportunitiesApi.listAll(),
+          adminApi.listOrganizations(),
         ]);
         setApplications(apps);
         setUnapplied(unapplied);
@@ -240,6 +254,7 @@ export function AdminDashboard() {
         setLeaderboard(board);
         setAllUsers(users);
         setAllOpportunities(opps);
+        setOrganizations(orgs);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : t("admin.dashboardLoadError"));
       } finally {
@@ -481,6 +496,7 @@ export function AdminDashboard() {
     admins: t("admin.navAdmins"),
     users: t("admin.navUsers"),
     opportunities: t("admin.navOpportunities"),
+    organizations: t("admin.navOrganizations"),
   };
 
   const goToApplications = () => setSection("applications");
@@ -756,6 +772,14 @@ export function AdminDashboard() {
             {section === "users" && <OwnerUsers />}
 
             {section === "opportunities" && <OwnerOpportunities />}
+
+            {section === "organizations" && (
+              <OwnerOrganizations
+                organizations={organizations}
+                opportunities={allOpportunities}
+                onChanged={refresh}
+              />
+            )}
           </>
         )}
       </div>

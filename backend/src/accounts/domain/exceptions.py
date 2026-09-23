@@ -38,6 +38,20 @@ class ApplicationNotFound(NotFoundError):
         super().__init__(message)
 
 
+class OrganizationNotFound(NotFoundError):
+    code = "organization_not_found"
+
+    def __init__(self, message: str = "Organization not found") -> None:
+        super().__init__(message)
+
+
+class OrganizationNameTaken(ConflictError):
+    code = "organization_name_taken"
+
+    def __init__(self, message: str = "Another organization already uses that name") -> None:
+        super().__init__(message)
+
+
 class ApplicationAlreadyReviewed(ConflictError):
     code = "application_already_reviewed"
 
