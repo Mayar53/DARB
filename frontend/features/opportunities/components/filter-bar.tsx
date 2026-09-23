@@ -3,16 +3,20 @@
 import { SlidersHorizontal } from "lucide-react";
 import { useMemo } from "react";
 
-import { AGE_FILTERS, AGE_FILTER_LABELS, DURATIONS, FUNDING, MODES, SORTS } from "@/lib/constants";
+import { Slider } from "@/components/ui/slider";
+import { AGE_RANGE_MAX, AGE_RANGE_MIN, DURATIONS, FUNDING, MODES, SORTS } from "@/lib/constants";
 import { useTranslation } from "@/hooks/use-translation";
 import type { MessageKey } from "@/lib/i18n";
 
 import {
+  FULL_AGE_RANGE,
+  isFullAgeRange,
   selectFiltered,
   selectHasActiveFilters,
   selectLocations,
   useOpportunitiesStore,
 } from "../store/opportunities.store";
+import type { AgeRange } from "../store/opportunities.store";
 
 const MODE_LABELS: Record<(typeof MODES)[number], MessageKey> = {
   online: "home.modeOnline",
@@ -37,6 +41,14 @@ const DURATION_LABELS: Record<(typeof DURATIONS)[number], MessageKey> = {
   medium: "home.durationMedium",
   long: "home.durationLong",
 };
+
+/** The age filter's readout: "All ages", "14-22", "22+" (open-ended) or "18". */
+function ageRangeLabel(range: AgeRange, allAges: string): string {
+  if (isFullAgeRange(range)) return allAges;
+  if (range.max >= AGE_RANGE_MAX) return `${range.min}+`;
+  if (range.min === range.max) return `${range.min}`;
+  return `${range.min}-${range.max}`;
+}
 
 /** A single labelled select with the draft's pill visual style. */
 function FilterSelect({
@@ -70,7 +82,7 @@ function useActiveFilterCount(): number {
   const activeSubjects = useOpportunitiesStore((s) => s.activeSubjects.length);
   const mode = useOpportunitiesStore((s) => s.mode);
   const funding = useOpportunitiesStore((s) => s.funding);
-  const age = useOpportunitiesStore((s) => s.age);
+  const ageRange = useOpportunitiesStore((s) => s.ageRange);
   const certificate = useOpportunitiesStore((s) => s.certificate);
   const location = useOpportunitiesStore((s) => s.location);
   const duration = useOpportunitiesStore((s) => s.duration);
@@ -81,7 +93,7 @@ function useActiveFilterCount(): number {
     activeSubjects +
     (mode !== "all" ? 1 : 0) +
     (funding !== "all" ? 1 : 0) +
-    (age !== "all" ? 1 : 0) +
+    (isFullAgeRange(ageRange) ? 0 : 1) +
     (certificate !== "all" ? 1 : 0) +
     (location !== "all" ? 1 : 0) +
     (duration !== "all" ? 1 : 0) +
@@ -90,14 +102,14 @@ function useActiveFilterCount(): number {
   );
 }
 
-/** Mode / funding / sort / age / certificate / location / duration selects —
- * wrapped in a modern, youth-friendly filter card. */
+/** Mode / funding / certificate / location / duration / deadline / sort selects
+ * plus the age range slider — wrapped in a modern, youth-friendly filter card. */
 export function FilterBar() {
   const { t } = useTranslation();
   const mode = useOpportunitiesStore((s) => s.mode);
   const funding = useOpportunitiesStore((s) => s.funding);
   const sort = useOpportunitiesStore((s) => s.sort);
-  const age = useOpportunitiesStore((s) => s.age);
+  const ageRange = useOpportunitiesStore((s) => s.ageRange);
   const certificate = useOpportunitiesStore((s) => s.certificate);
   const location = useOpportunitiesStore((s) => s.location);
   const duration = useOpportunitiesStore((s) => s.duration);
@@ -112,7 +124,7 @@ export function FilterBar() {
   const setMode = useOpportunitiesStore((s) => s.setMode);
   const setFunding = useOpportunitiesStore((s) => s.setFunding);
   const setSort = useOpportunitiesStore((s) => s.setSort);
-  const setAge = useOpportunitiesStore((s) => s.setAge);
+  const setAgeRange = useOpportunitiesStore((s) => s.setAgeRange);
   const setCertificate = useOpportunitiesStore((s) => s.setCertificate);
   const setLocation = useOpportunitiesStore((s) => s.setLocation);
   const setDuration = useOpportunitiesStore((s) => s.setDuration);
@@ -128,7 +140,7 @@ export function FilterBar() {
         activeSubjects,
         mode,
         funding,
-        age,
+        ageRange,
         certificate,
         location,
         duration,
@@ -142,7 +154,7 @@ export function FilterBar() {
       activeSubjects,
       mode,
       funding,
-      age,
+      ageRange,
       certificate,
       location,
       duration,
@@ -176,8 +188,8 @@ export function FilterBar() {
         )}
       </div>
 
-      {/* Selects in a responsive grid */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+      {/* Selects in a responsive grid (the age range spans the row below) */}
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3 p-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
         <FilterSelect label={t("home.filterMode")} value={mode} onChange={(v) => setMode(v as typeof mode)}>
           <option value="all">{t("home.modeAll")}</option>
           {MODES.map((m) => (
@@ -196,14 +208,46 @@ export function FilterBar() {
           ))}
         </FilterSelect>
 
-        <FilterSelect label={t("home.filterAge")} value={age} onChange={(v) => setAge(v)}>
-          <option value="all">{t("home.ageAll")}</option>
-          {AGE_FILTERS.map((a) => (
-            <option key={a.key} value={a.key}>
-              {t(AGE_FILTER_LABELS[a.key] ?? "home.ageAll")}
-            </option>
-          ))}
-        </FilterSelect>
+        {/* Age is a continuous range rather than a set of choices, so it gets
+            the full row under the selects instead of a select cell. */}
+        <div className="col-span-2 mt-1 border-t border-border pt-4 sm:col-span-3 lg:col-span-4 xl:col-span-7">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("home.filterAge")}
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary tabular-nums">
+                {ageRangeLabel(ageRange, t("home.ageAll"))}
+              </span>
+              {!isFullAgeRange(ageRange) && (
+                <button
+                  type="button"
+                  onClick={() => setAgeRange(FULL_AGE_RANGE)}
+                  className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                >
+                  {t("home.ageAll")}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* The axis is numeric, so it stays left-to-right in RTL too. */}
+          <div className="mt-1" dir="ltr">
+            <Slider
+              dir="ltr"
+              min={AGE_RANGE_MIN}
+              max={AGE_RANGE_MAX}
+              step={1}
+              value={[ageRange.min, ageRange.max]}
+              onValueChange={([min, max]) => setAgeRange({ min, max })}
+              thumbLabels={[t("home.ageMinLabel"), t("home.ageMaxLabel")]}
+            />
+            <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground tabular-nums">
+              <span>{AGE_RANGE_MIN}</span>
+              <span>{AGE_RANGE_MAX}+</span>
+            </div>
+          </div>
+        </div>
 
         <FilterSelect label={t("home.filterCertificate")} value={certificate} onChange={(v) => setCertificate(v as typeof certificate)}>
           <option value="all">{t("home.certAll")}</option>

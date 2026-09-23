@@ -3,7 +3,8 @@
 import { create } from "zustand";
 
 import {
-  AGE_FILTERS,
+  AGE_RANGE_MAX,
+  AGE_RANGE_MIN,
   SUBJECT_GROUP_CHILDREN,
   SUBJECT_GROUP_PARENTS,
   SUBJECT_PARENTS,
@@ -28,7 +29,8 @@ interface OpportunitiesState {
   activeSubjects: string[];
   mode: Mode | "all";
   funding: Funding | "all";
-  age: string;
+  /** Inclusive age range. The full range means no age restriction. */
+  ageRange: AgeRange;
   certificate: "all" | "yes" | "no";
   location: string;
   /** Duration buckets for the duration filter. */
@@ -47,7 +49,7 @@ interface OpportunitiesState {
   clearSubjects: () => void;
   setMode: (mode: Mode | "all") => void;
   setFunding: (funding: Funding | "all") => void;
-  setAge: (age: string) => void;
+  setAgeRange: (range: AgeRange) => void;
   setCertificate: (certificate: "all" | "yes" | "no") => void;
   setLocation: (location: string) => void;
   setDuration: (duration: DurationKey | "all") => void;
@@ -117,6 +119,14 @@ export interface AgeRange {
   max: number;
 }
 
+/** The whole slider range — i.e. "any age", no restriction. */
+export const FULL_AGE_RANGE: AgeRange = { min: AGE_RANGE_MIN, max: AGE_RANGE_MAX };
+
+/** True when the range covers the whole slider, so it filters nothing out. */
+export function isFullAgeRange(range: AgeRange): boolean {
+  return range.min <= AGE_RANGE_MIN && range.max >= AGE_RANGE_MAX;
+}
+
 /**
  * Parse a stored opportunity age value into an inclusive numeric range.
  * Understands:
@@ -150,15 +160,17 @@ export function rangesOverlap(a: AgeRange, b: AgeRange): boolean {
   return a.min <= b.max && b.min <= a.max;
 }
 
-/** True when the opportunity's stored age overlaps the selected filter bucket. */
-export function opportunityMatchesAge(opportunity: Opportunity, selectedKey: string): boolean {
-  if (selectedKey === "all") return true;
-  const selected = AGE_FILTERS.find((f) => f.key === selectedKey);
-  if (!selected) return true; // Unknown bucket → don't filter out.
+/** True when an opportunity's stored age overlaps the selected age range. */
+export function opportunityMatchesAge(opportunity: Opportunity, range: AgeRange): boolean {
+  if (isFullAgeRange(range)) return true;
   const oppRange = parseAgeRange(opportunity.age);
-  // Unparseable/blank stored age → treat as unrestricted ("all").
+  // Unparseable/blank stored age → treat as unrestricted ("all ages").
   if (!oppRange) return true;
-  return rangesOverlap(oppRange, { min: selected.min, max: selected.max });
+  return rangesOverlap(oppRange, {
+    min: range.min,
+    // The top of the slider is open-ended: AGE_RANGE_MAX means "and above".
+    max: range.max >= AGE_RANGE_MAX ? 150 : range.max,
+  });
 }
 
 export const useOpportunitiesStore = create<OpportunitiesState>((set) => ({
@@ -170,7 +182,7 @@ export const useOpportunitiesStore = create<OpportunitiesState>((set) => ({
   activeSubjects: [],
   mode: "all",
   funding: "all",
-  age: "all",
+  ageRange: FULL_AGE_RANGE,
   certificate: "all",
   location: "all",
   duration: "all",
@@ -210,7 +222,7 @@ export const useOpportunitiesStore = create<OpportunitiesState>((set) => ({
   clearSubjects: () => set({ activeSubjects: [] }),
   setMode: (mode) => set({ mode }),
   setFunding: (funding) => set({ funding }),
-  setAge: (age) => set({ age }),
+  setAgeRange: (ageRange) => set({ ageRange }),
   setCertificate: (certificate) => set({ certificate }),
   setLocation: (location) => {
     // Treat any case/spacing variant of "online" as the special online filter
@@ -229,7 +241,7 @@ export const useOpportunitiesStore = create<OpportunitiesState>((set) => ({
       activeSubjects: [],
       mode: "all",
       funding: "all",
-      age: "all",
+      ageRange: FULL_AGE_RANGE,
       certificate: "all",
       location: "all",
       duration: "all",
@@ -310,7 +322,7 @@ export function selectFiltered(state: OpportunitiesState): OpportunityCardView[]
     if (!matchesSubjects(o, state.activeSubjects)) return false;
     if (state.mode !== "all" && o.mode !== state.mode) return false;
     if (state.funding !== "all" && o.funding !== state.funding) return false;
-    if (state.age !== "all" && !opportunityMatchesAge(o, state.age)) return false;
+    if (!isFullAgeRange(state.ageRange) && !opportunityMatchesAge(o, state.ageRange)) return false;
     if (state.certificate === "yes" && !o.certificate) return false;
     if (state.certificate === "no" && o.certificate) return false;
     if (state.location !== "all") {
@@ -397,7 +409,7 @@ export const selectHasActiveFilters = (state: OpportunitiesState): boolean =>
   state.activeSubjects.length > 0 ||
   state.mode !== "all" ||
   state.funding !== "all" ||
-  state.age !== "all" ||
+  !isFullAgeRange(state.ageRange) ||
   state.certificate !== "all" ||
   state.location !== "all" ||
   state.duration !== "all" ||

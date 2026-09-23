@@ -23,7 +23,7 @@ export function OpportunityGrid() {
   const activeSubjects = useOpportunitiesStore((s) => s.activeSubjects);
   const mode = useOpportunitiesStore((s) => s.mode);
   const funding = useOpportunitiesStore((s) => s.funding);
-  const age = useOpportunitiesStore((s) => s.age);
+  const ageRange = useOpportunitiesStore((s) => s.ageRange);
   const certificate = useOpportunitiesStore((s) => s.certificate);
   const location = useOpportunitiesStore((s) => s.location);
   const duration = useOpportunitiesStore((s) => s.duration);
@@ -39,7 +39,7 @@ export function OpportunityGrid() {
         activeSubjects,
         mode,
         funding,
-        age,
+        ageRange,
         certificate,
         location,
         duration,
@@ -53,7 +53,7 @@ export function OpportunityGrid() {
       activeSubjects,
       mode,
       funding,
-      age,
+      ageRange,
       certificate,
       location,
       duration,

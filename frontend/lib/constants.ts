@@ -308,39 +308,12 @@ export const AGES = ["all", "13-15", "15-18", "+18"] as const;
 export type AgeKey = (typeof AGES)[number];
 
 /**
- * Age filter buckets offered in the filter bar. Each maps to an inclusive
- * numeric range; an opportunity matches when its stored age range (canonical
- * "13-15"/"+18", or a free-text range such as "15-25") OVERLAPS the bucket.
- *
- * Buckets intentionally overlap at boundaries (13-15 and 16-18, 18-21…) so a
- * user whose age is on an edge still finds opportunities covering them.
+ * Bounds of the age filter, which is a continuous range rather than buckets.
+ * The upper bound is open-ended: dragging the top thumb to AGE_RANGE_MAX means
+ * "this age and above", and spanning the full range means no age restriction.
  */
-export interface AgeFilterOption {
-  key: string;
-  /** Inclusive lower bound of the bucket. */
-  min: number;
-  /** Inclusive upper bound of the bucket. */
-  max: number;
-}
-
-export const AGE_FILTERS: readonly AgeFilterOption[] = [
-  { key: "under-13", min: 0, max: 12 },
-  { key: "13-15", min: 13, max: 15 },
-  { key: "16-18", min: 16, max: 18 },
-  { key: "19-21", min: 19, max: 21 },
-  { key: "22-25", min: 22, max: 25 },
-  { key: "26+", min: 26, max: 150 },
-] as const;
-
-/** Display labels for the age filter buckets (i18n message keys). */
-export const AGE_FILTER_LABELS: Record<string, MessageKey> = {
-  "under-13": "home.ageUnder13",
-  "13-15": "home.age13to15",
-  "16-18": "home.age16to18",
-  "19-21": "home.age19to21",
-  "22-25": "home.age22to25",
-  "26+": "home.age26plus",
-};
+export const AGE_RANGE_MIN = 10;
+export const AGE_RANGE_MAX = 30;
 
 /** Duration buckets for the duration filter. */
 export const DURATIONS = ["short", "medium", "long"] as const;
