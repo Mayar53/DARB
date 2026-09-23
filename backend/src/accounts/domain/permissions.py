@@ -85,6 +85,14 @@ DEFAULT_ORG_ADMIN_PERMISSIONS: list[str] = [
 # Kept for compatibility with existing callers (the generic "admin" role).
 DEFAULT_ADMIN_PERMISSIONS: list[str] = DEFAULT_RESEARCHER_PERMISSIONS
 
+# The admin types an OWNER may assign from the dashboard, each with the
+# permissions it starts from. The OWNER role is deliberately absent — it can
+# never be handed out through the admin API.
+ASSIGNABLE_ADMIN_ROLES: dict[str, list[str]] = {
+    "researcher": DEFAULT_RESEARCHER_PERMISSIONS,
+    "org_admin": DEFAULT_ORG_ADMIN_PERMISSIONS,
+}
+
 # The OWNER has every permission.
 OWNER_PERMISSIONS: list[str] = list(ALL_PERMISSIONS)
 

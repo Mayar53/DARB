@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 from datetime import datetime
+from typing import Literal
 
 from ninja import Schema
 from pydantic import EmailStr, Field, field_validator
@@ -220,11 +221,14 @@ class OrganizationUpdateIn(Schema):
 
 
 class AdminUpdateIn(Schema):
-    """OWNER management of an admin: activate/deactivate + permissions."""
+    """OWNER management of an admin: type, activate/deactivate, permissions."""
 
     is_active: bool | None = None
     permissions: list[str] | None = None
     organization_ids: list[int] | None = None
+    # Which kind of admin this account is. Only these two are assignable — the
+    # OWNER role can never be handed out through this endpoint.
+    role: Literal["researcher", "org_admin"] | None = None
 
 
 class ProfileUpdateIn(Schema):

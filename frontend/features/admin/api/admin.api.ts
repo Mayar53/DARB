@@ -48,7 +48,13 @@ export const adminApi = {
     api.post<User>("/auth/admins", data),
   updateAdmin: (
     id: number,
-    data: { is_active?: boolean; permissions?: string[]; organization_ids?: number[] },
+    data: {
+      is_active?: boolean;
+      permissions?: string[];
+      organization_ids?: number[];
+      /** Which kind of admin this is — the OWNER role is not assignable. */
+      role?: "researcher" | "org_admin";
+    },
   ) => api.patch<User>(`/auth/admins/${id}`, data),
 
   // --- Organizations ---

@@ -406,6 +406,63 @@ def test_owner_can_edit_organization():
     assert denied.status_code == 403
 
 
+@pytest.mark.django_db
+def test_owner_chooses_whether_an_admin_is_researcher_or_ngo():
+    """The owner picks an admin's kind. Because the role is only a label and
+    capability comes from permissions, choosing a type applies its defaults."""
+    _make_owner()
+    from src.accounts.adapters.outbound.orm_models import UserModel
+
+    admin_id = _make_admin("typed@example.com", "Typed Admin")
+    client, tokens = _login("boss@example.com")
+    owner = _h(tokens)
+
+    as_researcher = client.patch(
+        f"/api/auth/admins/{admin_id}",
+        data={"role": "researcher"},
+        content_type="application/json",
+        headers=owner,
+    )
+    assert as_researcher.status_code == 200, as_researcher.content
+    assert as_researcher.json()["role"] == "researcher"
+    assert "review_opportunities" in as_researcher.json()["permissions"]
+
+    as_ngo = client.patch(
+        f"/api/auth/admins/{admin_id}",
+        data={"role": "org_admin"},
+        content_type="application/json",
+        headers=owner,
+    )
+    assert as_ngo.status_code == 200, as_ngo.content
+    assert as_ngo.json()["role"] == "org_admin"
+    assert "manage_own_org_opportunities" in as_ngo.json()["permissions"]
+    assert "review_opportunities" not in as_ngo.json()["permissions"]
+
+    # The change survives a fresh login (it is stored, not just echoed).
+    _, admin_tokens = _login("typed@example.com")
+    me = client.get("/api/auth/me", headers=_h(admin_tokens))
+    assert me.json()["role"] == "org_admin"
+
+    # Only the two kinds are assignable — never the OWNER role.
+    bad = client.patch(
+        f"/api/auth/admins/{admin_id}",
+        data={"role": "owner"},
+        content_type="application/json",
+        headers=owner,
+    )
+    assert bad.status_code == 422
+
+    # And the OWNER's own account can never be re-typed.
+    owner_row = UserModel.objects.get(email="boss@example.com")
+    denied = client.patch(
+        f"/api/auth/admins/{owner_row.id}",
+        data={"role": "researcher"},
+        content_type="application/json",
+        headers=owner,
+    )
+    assert denied.status_code == 403
+
+
 # --------------------------------------------------------------------------- #
 # Opportunity statuses
 # --------------------------------------------------------------------------- #

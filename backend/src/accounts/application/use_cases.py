@@ -24,6 +24,7 @@ from src.accounts.domain.exceptions import (
     UserNotFound,
 )
 from src.accounts.domain.permissions import (
+    ASSIGNABLE_ADMIN_ROLES,
     DEFAULT_ORG_ADMIN_PERMISSIONS,
     DEFAULT_RESEARCHER_PERMISSIONS,
 )
@@ -37,7 +38,7 @@ from src.accounts.domain.ports import (
     UserRepository,
 )
 from src.shared.application.use_case import UseCase
-from src.shared.domain.exceptions import PermissionDeniedError
+from src.shared.domain.exceptions import PermissionDeniedError, ValidationError
 
 
 # --------------------------------------------------------------------------- #
@@ -109,6 +110,8 @@ class AdminUpdateCommand:
     is_active: bool | None = None
     permissions: list[str] | None = None
     organization_ids: list[int] | None = None
+    # "researcher" | "org_admin" — the kind of admin, set by the OWNER.
+    role: str | None = None
 
 
 def _normalize_email(email: str) -> str:
@@ -543,7 +546,7 @@ class ListUsers(UseCase[None, list[User]]):
 
 
 class UpdateAdmin(UseCase[AdminUpdateCommand, User]):
-    """OWNER management of an admin: activate/deactivate, permissions, orgs."""
+    """OWNER management of an admin: type, activate/deactivate, permissions, orgs."""
 
     def __init__(self, users: UserRepository, organizations: OrganizationRepository) -> None:
         self._users = users
@@ -555,6 +558,15 @@ class UpdateAdmin(UseCase[AdminUpdateCommand, User]):
             raise UserNotFound()
         if user.role == "owner":
             raise PermissionDeniedError("Cannot modify the OWNER account")
+
+        # The type is a label — what an admin can actually do comes from the
+        # permission list — so choosing a type applies that type's defaults.
+        # Sent permissions still win when the caller sets both.
+        if data.role is not None:
+            defaults = ASSIGNABLE_ADMIN_ROLES.get(data.role)
+            if defaults is None:
+                raise ValidationError(f"Unsupported admin type: {data.role}")
+            self._users.set_role(user.id, role=data.role, permissions=defaults)
 
         updated = self._users.update_admin(
             user.id,

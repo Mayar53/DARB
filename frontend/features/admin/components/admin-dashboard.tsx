@@ -853,6 +853,7 @@ export function AdminDashboard() {
                   admins={admins}
                   permissions={permissions}
                   leaderboard={leaderboard}
+                  organizations={organizations}
                   onChanged={refresh}
                 />
                 <Card>

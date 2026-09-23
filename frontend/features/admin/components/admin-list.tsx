@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, ChevronDown, Plus, Power } from "lucide-react";
+import { ChevronDown, Plus, Power } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -19,7 +19,7 @@ import type { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 import { adminApi } from "../api/admin.api";
-import type { AdminLeaderboardEntry, Permission } from "../types";
+import type { AdminLeaderboardEntry, Organization, Permission } from "../types";
 
 /** Which group an admin belongs to. NGO admins are the approved org requests;
  *  everyone else with admin powers researches. */
@@ -40,12 +40,15 @@ export function AdminList({
   admins,
   permissions,
   leaderboard,
+  organizations,
   onChanged,
 }: {
   admins: User[];
   permissions: Permission[];
   /** Per-admin contribution counts + opportunity titles (from the dashboard). */
   leaderboard: AdminLeaderboardEntry[];
+  /** NGOs, for linking an NGO admin to the organization they represent. */
+  organizations: Organization[];
   onChanged: () => void;
 }) {
   const { t } = useTranslation();
@@ -62,6 +65,31 @@ export function AdminList({
     try {
       await adminApi.updateAdmin(admin.id, { is_active: !admin.is_active });
       toast.success(admin.is_active ? t("admin.adminDeactivated") : t("admin.adminActivated"));
+      onChanged();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("admin.adminUpdateError"));
+    }
+  };
+
+  /** Switch an admin between the two kinds. The backend applies that kind's
+   *  standard permissions, since the role alone grants nothing. */
+  const setType = async (admin: User, role: "researcher" | "org_admin") => {
+    try {
+      await adminApi.updateAdmin(admin.id, { role });
+      toast.success(t("admin.typeChanged"));
+      onChanged();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("admin.adminUpdateError"));
+    }
+  };
+
+  /** Link an NGO admin to the organization they represent. */
+  const setNgo = async (admin: User, value: string) => {
+    try {
+      await adminApi.updateAdmin(admin.id, {
+        organization_ids: value ? [Number(value)] : [],
+      });
+      toast.success(t("admin.orgAssigned"));
       onChanged();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("admin.adminUpdateError"));
@@ -213,6 +241,7 @@ export function AdminList({
               const isOpen = openId === admin.id;
               const currentPerms = draftPerms[admin.id] ?? admin.permissions;
               const org = admin.organizations?.[0];
+              const isNgoAdmin = adminGroup(admin) === "ngo";
               const published =
                 leaderboard.find((entry) => entry.admin_id === admin.id)?.opportunities ?? [];
               return (
@@ -238,23 +267,51 @@ export function AdminList({
                       <div className="text-muted-foreground" dir="ltr">
                         {admin.email}
                       </div>
-                      {org && (
-                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary/25 px-2 py-0.5 font-semibold text-foreground">
-                            <Building2 className="size-3" />
-                            {org.name}
-                          </span>
-                          {org.website ? (
-                            <a
-                              href={org.website}
-                              target="_blank"
-                              rel="noreferrer"
-                              dir="ltr"
-                              className="font-medium text-primary hover:underline"
+                      {org?.website ? (
+                        <a
+                          href={org.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          dir="ltr"
+                          className="mt-1 text-xs font-medium text-primary hover:underline"
+                        >
+                          {org.website}
+                        </a>
+                      ) : null}
+
+                      {/* The owner decides which kind of admin this is. */}
+                      {!isOwner && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <select
+                            value={isNgoAdmin ? "org_admin" : "researcher"}
+                            onChange={(event) =>
+                              void setType(
+                                admin,
+                                event.target.value as "researcher" | "org_admin",
+                              )
+                            }
+                            aria-label={t("admin.typeLabel")}
+                            className="h-8 cursor-pointer rounded-full border border-border bg-card px-3 text-xs font-semibold text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
+                          >
+                            <option value="researcher">{t("admin.typeResearcher")}</option>
+                            <option value="org_admin">{t("admin.typeNgo")}</option>
+                          </select>
+
+                          {isNgoAdmin && (
+                            <select
+                              value={org?.id ?? ""}
+                              onChange={(event) => void setNgo(admin, event.target.value)}
+                              aria-label={t("admin.orgLabel")}
+                              className="h-8 max-w-56 cursor-pointer rounded-full border border-border bg-card px-3 text-xs font-semibold text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
                             >
-                              {org.website}
-                            </a>
-                          ) : null}
+                              <option value="">{t("admin.orgNone")}</option>
+                              {organizations.map((organization) => (
+                                <option key={organization.id} value={organization.id}>
+                                  {organization.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
                         </div>
                       )}
                       {published.length > 0 && (
