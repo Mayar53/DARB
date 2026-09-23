@@ -572,18 +572,27 @@ export function OpportunityForm({
 
         <div className="space-y-1.5 sm:col-span-2">
           <Label>{t("home.ageLabel")}</Label>
-          {/* Numeric axis: stays left-to-right in RTL. */}
+          {/* Numeric axis: stays left-to-right in RTL. The right-hand end is
+              open-ended, which is how "16+" / "18+" are expressed. */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2" dir="ltr">
-            <Slider
-              dir="ltr"
-              className="min-w-40 flex-1"
-              min={AGE_RANGE_MIN}
-              max={AGE_RANGE_MAX}
-              step={1}
-              value={[ageRange.min, ageRange.max]}
-              onValueChange={([min, max]) => set("age", ageRangeToValue({ min, max }))}
-              thumbLabels={[t("home.ageMinLabel"), t("home.ageMaxLabel")]}
-            />
+            <div className="flex min-w-40 flex-1 items-center gap-2">
+              <span className="shrink-0 text-[11px] font-semibold text-muted-foreground tabular-nums">
+                {AGE_RANGE_MIN}
+              </span>
+              <Slider
+                dir="ltr"
+                className="flex-1"
+                min={AGE_RANGE_MIN}
+                max={AGE_RANGE_MAX}
+                step={1}
+                value={[ageRange.min, ageRange.max]}
+                onValueChange={([min, max]) => set("age", ageRangeToValue({ min, max }))}
+                thumbLabels={[t("home.ageMinLabel"), t("home.ageMaxLabel")]}
+              />
+              <span className="shrink-0 text-[11px] font-semibold text-muted-foreground tabular-nums">
+                {AGE_RANGE_MAX}+
+              </span>
+            </div>
             <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary tabular-nums">
               {ageRangeLabel(ageRange, t("home.ageAll"))}
             </span>

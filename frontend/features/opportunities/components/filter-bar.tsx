@@ -207,17 +207,27 @@ export function FilterBar() {
             {t("home.filterAge")}
           </span>
 
-          {/* The axis is numeric, so it stays left-to-right in RTL too. */}
-          <Slider
-            dir="ltr"
-            className="min-w-32 flex-1"
-            min={AGE_RANGE_MIN}
-            max={AGE_RANGE_MAX}
-            step={1}
-            value={[ageRange.min, ageRange.max]}
-            onValueChange={([min, max]) => setAgeRange({ min, max })}
-            thumbLabels={[t("home.ageMinLabel"), t("home.ageMaxLabel")]}
-          />
+          {/* The axis is numeric, so it stays left-to-right in RTL too. The
+              right-hand end is open-ended, which is how "16+" / "18+" are
+              expressed: set the left thumb and push the right one to the end. */}
+          <div className="flex min-w-40 flex-1 items-center gap-2" dir="ltr">
+            <span className="shrink-0 text-[11px] font-semibold text-muted-foreground tabular-nums">
+              {AGE_RANGE_MIN}
+            </span>
+            <Slider
+              dir="ltr"
+              className="flex-1"
+              min={AGE_RANGE_MIN}
+              max={AGE_RANGE_MAX}
+              step={1}
+              value={[ageRange.min, ageRange.max]}
+              onValueChange={([min, max]) => setAgeRange({ min, max })}
+              thumbLabels={[t("home.ageMinLabel"), t("home.ageMaxLabel")]}
+            />
+            <span className="shrink-0 text-[11px] font-semibold text-muted-foreground tabular-nums">
+              {AGE_RANGE_MAX}+
+            </span>
+          </div>
 
           <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary tabular-nums">
             {ageRangeLabel(ageRange, t("home.ageAll"))}
