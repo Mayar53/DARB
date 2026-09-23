@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, Building2, CalendarDays, Pencil, Plus, Share2, Trash2, UserRound } from "lucide-react";
+import { Banknote, Building2, CalendarDays, Eye, MessageCircle, MousePointerClick, Pencil, Plus, Save, Send, Share2, Trash2, UserRound } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -32,6 +32,27 @@ function statusBucket(o: Opportunity): "published" | "draft" | "hidden" | "past"
     if (deadline.getTime() < Date.now()) return "past";
   }
   return "published";
+}
+
+/** A compact engagement stat chip for one opportunity. */
+function StatChip({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Eye;
+  label: string;
+  value: number;
+}) {
+  return (
+    <span
+      title={label}
+      className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-0.5 text-[11px] font-semibold text-muted-foreground"
+    >
+      <Icon className="size-3" />
+      {value}
+    </span>
+  );
 }
 
 /** Owner: all opportunities split by status, with full CRUD + status actions. */
@@ -216,6 +237,14 @@ export function OwnerOpportunities() {
                                   ? `${t(fundingLabelKey(opp.funding))} · ${opp.price.trim()}`
                                   : t(fundingLabelKey(opp.funding))}
                               </span>
+                            </div>
+                            {/* Per-opportunity engagement stats */}
+                            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                              <StatChip icon={Eye} label={t("admin.statViews")} value={opp.views ?? 0} />
+                              <StatChip icon={MousePointerClick} label={t("admin.statClicks")} value={opp.apply_clicks ?? 0} />
+                              <StatChip icon={Send} label={t("admin.statApplied")} value={opp.applied_count ?? 0} />
+                              <StatChip icon={Save} label={t("admin.statSaved")} value={opp.saved_count ?? 0} />
+                              <StatChip icon={MessageCircle} label={t("admin.statComments")} value={opp.comment_count ?? 0} />
                             </div>
                           </div>
 
