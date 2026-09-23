@@ -14,6 +14,9 @@ from functools import lru_cache
 from src.accounts.adapters.outbound.admin_application_repository import (
     DjangoAdminApplicationRepository,
 )
+from src.accounts.adapters.outbound.engagement_repository import (
+    DjangoAdminEngagementRepository,
+)
 from src.accounts.adapters.outbound.hasher import DjangoPasswordHasher
 from src.accounts.adapters.outbound.organization_repository import DjangoOrganizationRepository
 from src.accounts.adapters.outbound.password_reset_notifier import DjangoPasswordResetNotifier
@@ -59,6 +62,7 @@ class AccountsContainer:
         self.password_reset_notifier = DjangoPasswordResetNotifier()
         # Read-only cross-feature access for the owner leaderboard counts.
         self.opportunities = DjangoOpportunityRepository()
+        self.engagement = DjangoAdminEngagementRepository()
 
     @property
     def register_user(self) -> RegisterUser:
@@ -102,7 +106,7 @@ class AccountsContainer:
 
     @property
     def get_admin_leaderboard(self) -> GetAdminLeaderboard:
-        return GetAdminLeaderboard(self.users, self.opportunities)
+        return GetAdminLeaderboard(self.users, self.opportunities, self.engagement)
 
     @property
     def list_users(self) -> ListUsers:

@@ -9,6 +9,8 @@ export const opportunitiesApi = {
   list: () => api.get<Opportunity[]>("/opportunities", { auth: false }),
   /** Public detail — a single active opportunity. */
   get: (id: number) => api.get<Opportunity>(`/opportunities/${id}`, { auth: false }),
+  /** Record an "apply now" click (the apply link points off-site). */
+  click: (id: number) => api.post<void>(`/opportunities/${id}/click`),
   /** Staff-only: the admin panel needs to see inactive rows too. */
   listAll: () => api.get<Opportunity[]>("/opportunities/all"),
   /** Staff-only: the authenticated admin's own opportunities (any status). */

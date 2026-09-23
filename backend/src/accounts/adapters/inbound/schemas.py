@@ -192,6 +192,10 @@ class AdminLeaderboardEntryOut(Schema):
     avatar: str = ""
     total_opportunities: int = 0
     active_opportunities: int = 0
+    # Engagement on the admin's opportunities, summed from real rows.
+    total_views: int = 0
+    total_clicks: int = 0
+    total_applications: int = 0
     # The admin's submitted opportunities (id + title), newest first.
     opportunities: list[dict] = []
 

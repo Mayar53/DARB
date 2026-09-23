@@ -197,6 +197,50 @@ def test_regular_admin_cannot_manage_admins():
 
 
 @pytest.mark.django_db
+def test_owner_leaderboard_shows_views_clicks_and_applications():
+    """The owner sees how each admin's opportunities performed — views, apply
+    clicks and applications — all counted from real rows, never hardcoded, and
+    kept separate per admin.
+    """
+    _make_owner()
+    from src.applied.adapters.outbound.orm_models import AppliedOpportunityModel
+    from src.opportunities.adapters.outbound.orm_models import OpportunityModel
+
+    admin_a = _make_admin("a@example.com", "Admin A")
+    opp = _create_opp(admin_a, "Viewed Course")
+    OpportunityModel.objects.filter(pk=opp.id).update(views=7, apply_clicks=3)
+
+    # Two different users apply to A's opportunity (unique per user+opportunity).
+    u1 = accounts_container().users.add(email="u1@example.com", full_name="U1", password_hash="x")
+    u2 = accounts_container().users.add(email="u2@example.com", full_name="U2", password_hash="x")
+    AppliedOpportunityModel.objects.create(user_id=u1.id, opportunity_id=opp.id)
+    AppliedOpportunityModel.objects.create(user_id=u2.id, opportunity_id=opp.id)
+
+    # A second admin's engagement must not bleed into A's numbers.
+    admin_b = _make_admin("b@example.com", "Admin B")
+    opp_b = _create_opp(admin_b, "Other Course")
+    OpportunityModel.objects.filter(pk=opp_b.id).update(views=100, apply_clicks=50)
+
+    client, tokens = _login("boss@example.com")
+    board = client.get("/api/auth/admins/leaderboard", headers=_h(tokens))
+    assert board.status_code == 200
+    entries = {e["admin_id"]: e for e in board.json()}
+    a = entries[admin_a]
+    assert a["total_opportunities"] == 1
+    assert a["total_views"] == 7
+    assert a["total_clicks"] == 3
+    assert a["total_applications"] == 2
+    b = entries[admin_b]
+    assert b["total_views"] == 100
+    assert b["total_clicks"] == 50
+    assert b["total_applications"] == 0
+
+    # Regular admins cannot read the leaderboard at all.
+    _, admin_tokens = _login("a@example.com")
+    assert client.get("/api/auth/admins/leaderboard", headers=_h(admin_tokens)).status_code == 403
+
+
+@pytest.mark.django_db
 def test_owner_can_activate_deactivate_and_set_permissions():
     owner_id = _make_owner()
     admin_id = _make_admin("admin1@example.com")

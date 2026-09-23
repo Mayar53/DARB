@@ -108,7 +108,7 @@ function LeaderboardRow({ entry, rank }: { entry: AdminLeaderboardEntry; rank: n
             )}
           </div>
         </div>
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           <div className="text-center">
             <div className="font-bold text-foreground">{entry.total_opportunities}</div>
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
@@ -119,6 +119,24 @@ function LeaderboardRow({ entry, rank }: { entry: AdminLeaderboardEntry; rank: n
             <div className="font-bold text-emerald-600">{entry.active_opportunities}</div>
             <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
               {t("admin.leaderboardActive")}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-foreground">{entry.total_views}</div>
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              {t("admin.statViews")}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-foreground">{entry.total_clicks}</div>
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              {t("admin.statClicks")}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-foreground">{entry.total_applications}</div>
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              {t("admin.statApplied")}
             </div>
           </div>
         </div>

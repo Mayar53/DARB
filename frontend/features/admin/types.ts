@@ -31,6 +31,10 @@ export interface AdminLeaderboardEntry {
   avatar: string;
   total_opportunities: number;
   active_opportunities: number;
+  /** Engagement summed across the admin's opportunities (real DB counts). */
+  total_views: number;
+  total_clicks: number;
+  total_applications: number;
   opportunities: { id: number; title: string }[];
 }
 

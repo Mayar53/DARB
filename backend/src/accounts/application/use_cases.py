@@ -483,23 +483,31 @@ class AdminLeaderboardEntry:
     avatar: str = ""
     total_opportunities: int = 0
     active_opportunities: int = 0
+    # Engagement across the admin's opportunities: total views (from the
+    # opportunity rows), total "apply now" clicks, and applications received.
+    total_views: int = 0
+    total_clicks: int = 0
+    total_applications: int = 0
     opportunities: list[dict] = field(default_factory=list)
 
 
 class GetAdminLeaderboard(UseCase[None, list[AdminLeaderboardEntry]]):
     """Active admins ranked by their real contribution counts.
 
-    Owner-only (router gate). Counts come from the opportunities repository —
-    never hardcoded. "Active" = status == "published" and deadline not passed.
+    Owner-only (router gate). Counts come from the opportunities repository and
+    the applied table — never hardcoded. "Active" = status == "published" and
+    deadline not passed.
     """
 
     def __init__(
         self,
         users: UserRepository,
         opportunities: "OpportunityRepository",
+        engagement: "AdminEngagementRepository",
     ) -> None:
         self._users = users
         self._opportunities = opportunities
+        self._engagement = engagement
 
     def execute(self, _data: None = None) -> list[AdminLeaderboardEntry]:
         from datetime import date as _date
@@ -522,6 +530,9 @@ class GetAdminLeaderboard(UseCase[None, list[AdminLeaderboardEntry]]):
                     avatar=admin.avatar,
                     total_opportunities=len(opps),
                     active_opportunities=len(active),
+                    total_views=sum(o.views for o in opps),
+                    total_clicks=sum(o.apply_clicks for o in opps),
+                    total_applications=self._engagement.count_applications_for_owner(admin.id),
                     opportunities=[
                         {"id": o.id, "title": o.title}
                         for o in sorted(opps, key=lambda x: x.created_at, reverse=True)

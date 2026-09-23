@@ -695,7 +695,7 @@ const ar: Record<MessageKey, string> = {
   "toggle.theme": "تبديل السمة",
 
   // ---- الصفحة الرئيسية (DARB) ----
-  "home.tagline": "حيث يلتقي العراق بالشباب",
+  "home.tagline": "حيث يلتقي شباب العراق بالفرصة",
   "home.heroTitle": "فرصتك",
   "home.heroSubtitle": "تصفّح الفرص المناسبة لك",
   "home.searchPlaceholder": "ابحث عن فرصة…",

@@ -10,6 +10,7 @@ import { AppliedButton } from "@/features/applied";
 import { CommentList } from "@/features/comments";
 import { SaveButton } from "@/features/saved";
 import { useTranslation } from "@/hooks/use-translation";
+import { useAuthStore } from "@/stores/auth.store";
 import { Button } from "@/components/ui/button";
 import { categoryInfo, fundingLabelKey, fundingShowsPrice, ROUTES } from "@/lib/constants";
 import { localizedField } from "@/lib/utils";
@@ -62,6 +63,7 @@ export default function OpportunityDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { t, locale } = useTranslation();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
     const [opportunity, setOpportunity] = useState<Opportunity | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -259,6 +261,13 @@ export default function OpportunityDetailPage({
             href={opportunity.apply_url}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              // Best-effort: count the "apply now" click for the opportunity's
+              // admin (the endpoint requires a signed-in user).
+              if (isAuthenticated) {
+                void opportunitiesApi.click(opportunity.id).catch(() => {});
+              }
+            }}
             className="inline-flex min-h-11 w-fit items-center gap-1.5 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-dark"
           >
             {t("home.apply")}

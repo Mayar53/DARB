@@ -176,3 +176,16 @@ class PasswordResetNotifier(ABC):
 
     @abstractmethod
     def send_code(self, *, email: str, code: str) -> None: ...
+
+
+class AdminEngagementRepository(ABC):
+    """Read-only engagement counts for the owner leaderboard.
+
+    Views and clicks live on the opportunity row (read through the
+    opportunities repository), but applications live in the applied feature —
+    this port counts how many applications an admin's opportunities received
+    without the accounts use case reaching into another feature's tables.
+    """
+
+    @abstractmethod
+    def count_applications_for_owner(self, owner_id: int) -> int: ...
