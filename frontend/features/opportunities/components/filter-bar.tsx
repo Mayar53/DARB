@@ -10,13 +10,13 @@ import type { MessageKey } from "@/lib/i18n";
 
 import {
   FULL_AGE_RANGE,
+  ageRangeLabel,
   isFullAgeRange,
   selectFiltered,
   selectHasActiveFilters,
   selectLocations,
   useOpportunitiesStore,
 } from "../store/opportunities.store";
-import type { AgeRange } from "../store/opportunities.store";
 
 const MODE_LABELS: Record<(typeof MODES)[number], MessageKey> = {
   online: "home.modeOnline",
@@ -41,14 +41,6 @@ const DURATION_LABELS: Record<(typeof DURATIONS)[number], MessageKey> = {
   medium: "home.durationMedium",
   long: "home.durationLong",
 };
-
-/** The age filter's readout: "All ages", "14-22", "22+" (open-ended) or "18". */
-function ageRangeLabel(range: AgeRange, allAges: string): string {
-  if (isFullAgeRange(range)) return allAges;
-  if (range.max >= AGE_RANGE_MAX) return `${range.min}+`;
-  if (range.min === range.max) return `${range.min}`;
-  return `${range.min}-${range.max}`;
-}
 
 /** A single labelled select with the draft's pill visual style. */
 function FilterSelect({
@@ -208,45 +200,37 @@ export function FilterBar() {
           ))}
         </FilterSelect>
 
-        {/* Age is a continuous range rather than a set of choices, so it gets
-            the full row under the selects instead of a select cell. */}
-        <div className="col-span-2 mt-1 border-t border-border pt-4 sm:col-span-3 lg:col-span-4 xl:col-span-7">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("home.filterAge")}
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary tabular-nums">
-                {ageRangeLabel(ageRange, t("home.ageAll"))}
-              </span>
-              {!isFullAgeRange(ageRange) && (
-                <button
-                  type="button"
-                  onClick={() => setAgeRange(FULL_AGE_RANGE)}
-                  className="rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-                >
-                  {t("home.ageAll")}
-                </button>
-              )}
-            </div>
-          </div>
+        {/* Age is a continuous range, so it sits on one compact inline row —
+            label, track, value — instead of a block of its own. */}
+        <div className="col-span-2 flex flex-wrap items-center gap-x-3 gap-y-2 sm:col-span-3 lg:col-span-4 xl:col-span-7">
+          <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("home.filterAge")}
+          </span>
 
           {/* The axis is numeric, so it stays left-to-right in RTL too. */}
-          <div className="mt-1" dir="ltr">
-            <Slider
-              dir="ltr"
-              min={AGE_RANGE_MIN}
-              max={AGE_RANGE_MAX}
-              step={1}
-              value={[ageRange.min, ageRange.max]}
-              onValueChange={([min, max]) => setAgeRange({ min, max })}
-              thumbLabels={[t("home.ageMinLabel"), t("home.ageMaxLabel")]}
-            />
-            <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground tabular-nums">
-              <span>{AGE_RANGE_MIN}</span>
-              <span>{AGE_RANGE_MAX}+</span>
-            </div>
-          </div>
+          <Slider
+            dir="ltr"
+            className="min-w-32 flex-1"
+            min={AGE_RANGE_MIN}
+            max={AGE_RANGE_MAX}
+            step={1}
+            value={[ageRange.min, ageRange.max]}
+            onValueChange={([min, max]) => setAgeRange({ min, max })}
+            thumbLabels={[t("home.ageMinLabel"), t("home.ageMaxLabel")]}
+          />
+
+          <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary tabular-nums">
+            {ageRangeLabel(ageRange, t("home.ageAll"))}
+          </span>
+          {!isFullAgeRange(ageRange) && (
+            <button
+              type="button"
+              onClick={() => setAgeRange(FULL_AGE_RANGE)}
+              className="shrink-0 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+            >
+              {t("home.ageAll")}
+            </button>
+          )}
         </div>
 
         <FilterSelect label={t("home.filterCertificate")} value={certificate} onChange={(v) => setCertificate(v as typeof certificate)}>

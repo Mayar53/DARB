@@ -6,7 +6,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import {
+  AGE_RANGE_MAX,
+  AGE_RANGE_MIN,
   CATEGORIES,
   FUNDING,
   MODES,
@@ -18,6 +21,11 @@ import type { MessageKey } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 import { opportunitiesApi } from "../api/opportunities.api";
+import {
+  ageRangeLabel,
+  ageRangeToValue,
+  ageValueToRange,
+} from "../store/opportunities.store";
 import type { Opportunity } from "../types";
 
 const MODE_LABELS: Record<(typeof MODES)[number], MessageKey> = {
@@ -32,10 +40,6 @@ const FUNDING_LABELS: Record<(typeof FUNDING)[number], MessageKey> = {
   "fully-funded": "home.fundingFullyFunded",
   "partially-funded": "home.fundingPartiallyFunded",
 };
-
-const AGE_OPTIONS = ["all", "13-15", "15-18", "+18", "16-18", "19-21", "22-25", "26+"] as const;
-/** Sentinel value for the "custom range" option in the age selector. */
-const AGE_CUSTOM = "custom";
 
 interface FormState {
   category: string;
@@ -179,6 +183,10 @@ export function OpportunityForm({
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  // The slider's view of the stored age. `form.age` stays the string the API
+  // receives, so an age the admin never touches is never rewritten on save.
+  const ageRange = ageValueToRange(form.age);
 
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -562,40 +570,24 @@ export function OpportunityForm({
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="opp-age">{t("home.ageLabel")}</Label>
-          <select
-            id="opp-age"
-            value={AGE_OPTIONS.includes(form.age as (typeof AGE_OPTIONS)[number]) ? form.age : AGE_CUSTOM}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === AGE_CUSTOM) {
-                // Keep whatever free-text range is already set (or a sensible default).
-                if (AGE_OPTIONS.includes(form.age as (typeof AGE_OPTIONS)[number])) set("age", "");
-              } else {
-                set("age", value);
-              }
-            }}
-            className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm font-medium outline-none focus:border-primary"
-          >
-            {AGE_OPTIONS.map((a) => (
-              <option key={a} value={a}>
-                {a === "all" ? t("home.ageAll") : a}
-              </option>
-            ))}
-            <option value={AGE_CUSTOM}>{t("admin.form.ageCustom")}</option>
-          </select>
-          {form.age !== "all" && !AGE_OPTIONS.includes(form.age as (typeof AGE_OPTIONS)[number]) && (
-            <Input
-              aria-label={t("admin.form.ageCustom")}
-              type="text"
-              inputMode="numeric"
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label>{t("home.ageLabel")}</Label>
+          {/* Numeric axis: stays left-to-right in RTL. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2" dir="ltr">
+            <Slider
               dir="ltr"
-              placeholder={t("admin.form.ageCustomPh")}
-              value={form.age}
-              onChange={(e) => set("age", e.target.value)}
+              className="min-w-40 flex-1"
+              min={AGE_RANGE_MIN}
+              max={AGE_RANGE_MAX}
+              step={1}
+              value={[ageRange.min, ageRange.max]}
+              onValueChange={([min, max]) => set("age", ageRangeToValue({ min, max }))}
+              thumbLabels={[t("home.ageMinLabel"), t("home.ageMaxLabel")]}
             />
-          )}
+            <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary tabular-nums">
+              {ageRangeLabel(ageRange, t("home.ageAll"))}
+            </span>
+          </div>
         </div>
 
         <div className="space-y-1.5">

@@ -127,6 +127,33 @@ export function isFullAgeRange(range: AgeRange): boolean {
   return range.min <= AGE_RANGE_MIN && range.max >= AGE_RANGE_MAX;
 }
 
+/** The slider range for a stored age value, clamped to the slider's bounds. */
+export function ageValueToRange(value: string | null | undefined): AgeRange {
+  const parsed = parseAgeRange(value);
+  if (!parsed) return FULL_AGE_RANGE;
+  const clamp = (n: number) => Math.min(Math.max(n, AGE_RANGE_MIN), AGE_RANGE_MAX);
+  return { min: clamp(parsed.min), max: clamp(parsed.max) };
+}
+
+/**
+ * The stored age value for a range — the inverse of parseAgeRange, and always
+ * in a format the API accepts. The full range is stored as "all"; a range
+ * reaching AGE_RANGE_MAX is open-ended ("22+").
+ */
+export function ageRangeToValue(range: AgeRange): string {
+  if (isFullAgeRange(range)) return "all";
+  if (range.max >= AGE_RANGE_MAX) return `${range.min}+`;
+  return `${range.min}-${range.max}`;
+}
+
+/** The age readout: "All ages", "14-22", "22+" (open-ended) or "18". */
+export function ageRangeLabel(range: AgeRange, allAges: string): string {
+  if (isFullAgeRange(range)) return allAges;
+  if (range.max >= AGE_RANGE_MAX) return `${range.min}+`;
+  if (range.min === range.max) return `${range.min}`;
+  return `${range.min}-${range.max}`;
+}
+
 /**
  * Parse a stored opportunity age value into an inclusive numeric range.
  * Understands:
