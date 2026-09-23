@@ -21,12 +21,20 @@ import { cn } from "@/lib/utils";
 import { adminApi } from "../api/admin.api";
 import type { AdminLeaderboardEntry, Permission } from "../types";
 
+/** Which group an admin belongs to. NGO admins are the approved org requests;
+ *  everyone else with admin powers researches. */
+function adminGroup(admin: User): "owner" | "researcher" | "ngo" {
+  if (admin.role === "owner") return "owner";
+  return admin.role === "org_admin" ? "ngo" : "researcher";
+}
+
 /**
  * Admin accounts management: list, activate/deactivate, create directly, and
  * toggle each admin's permissions with checkboxes (no code editing needed).
  *
- * An admin who joined as an organization admin also shows the NGO they are
- * linked to (name + website) and the opportunities they have published.
+ * Researchers and NGO admins are listed as separate groups so the two kinds are
+ * never mixed; an NGO admin also shows the NGO they are linked to and the
+ * opportunities they have published.
  */
 export function AdminList({
   admins,
@@ -108,6 +116,15 @@ export function AdminList({
     }
   };
 
+  const adminGroups = [
+    { key: "owner" as const, label: t("admin.kindOwner") },
+    { key: "researcher" as const, label: t("admin.kindResearcher") },
+    { key: "ngo" as const, label: t("admin.kindNgo") },
+  ].map((group) => ({
+    ...group,
+    items: admins.filter((admin) => adminGroup(admin) === group.key),
+  }));
+
   return (
     <Card>
       <CardHeader>
@@ -177,8 +194,21 @@ export function AdminList({
         {admins.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("admin.adminsEmpty")}</p>
         ) : (
-          <ul className="space-y-2">
-            {admins.map((admin) => {
+          <div className="space-y-5">
+            {adminGroups.map((group) => {
+              if (group.items.length === 0) return null;
+              return (
+                <div key={group.key} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      {group.label}
+                    </span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground">
+                      {group.items.length}
+                    </span>
+                  </div>
+                  <ul className="space-y-2">
+            {group.items.map((admin) => {
               const isOwner = admin.role === "owner";
               const isOpen = openId === admin.id;
               const currentPerms = draftPerms[admin.id] ?? admin.permissions;
@@ -322,7 +352,11 @@ export function AdminList({
                 </li>
               );
             })}
-          </ul>
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
         )}
       </CardContent>
     </Card>

@@ -70,6 +70,11 @@ const SECTIONS: { key: SectionKey; icon: LucideIcon }[] = [
   { key: "organizations", icon: Building2 },
 ];
 
+/** Which kind of admin an application is for ("org" → NGO admin). */
+function applicationKind(application: AdminApplication): "researcher" | "ngo" {
+  return application.request_type === "org" ? "ngo" : "researcher";
+}
+
 /** One ranked leaderboard row, with expandable submitted opportunities. */
 function LeaderboardRow({ entry, rank }: { entry: AdminLeaderboardEntry; rank: number }) {
   const { t } = useTranslation();
@@ -181,6 +186,223 @@ function SummaryCard({
         {label}
       </div>
     </Comp>
+  );
+}
+
+type ReviewAction = "approve" | "waitlist" | "pending" | "reject";
+
+/** The review buttons for one application. Approval is terminal, so an approved
+ *  application shows none. */
+function ApplicationActions({
+  application,
+  onReview,
+}: {
+  application: AdminApplication;
+  onReview: (application: AdminApplication, action: ReviewAction) => void;
+}) {
+  const { t } = useTranslation();
+  const isWaitlisted = application.status === "waitlisted";
+  if (application.status === "approved") return null;
+  return (
+    <div className="flex shrink-0 flex-wrap items-center gap-2">
+      <Button size="sm" onClick={() => void onReview(application, "approve")}>
+        <Check className="size-3.5" />
+        {t("admin.approve")}
+      </Button>
+      {!isWaitlisted ? (
+        <Button size="sm" variant="outline" onClick={() => void onReview(application, "waitlist")}>
+          <Clock className="size-3.5" />
+          {t("admin.waitlist")}
+        </Button>
+      ) : (
+        <Button size="sm" variant="outline" onClick={() => void onReview(application, "pending")}>
+          <RotateCcw className="size-3.5" />
+          {t("admin.moveToPending")}
+        </Button>
+      )}
+      <Button
+        size="sm"
+        variant="ghost"
+        className="text-destructive hover:bg-destructive/10"
+        onClick={() => void onReview(application, "reject")}
+      >
+        <X className="size-3.5" />
+        {t("admin.reject")}
+      </Button>
+    </div>
+  );
+}
+
+/** One admin application row. */
+function ApplicationCard({
+  application,
+  linkedAdmin,
+  onReview,
+}: {
+  application: AdminApplication;
+  linkedAdmin?: User;
+  onReview: (application: AdminApplication, action: ReviewAction) => void;
+}) {
+  const { t } = useTranslation();
+  const isApproved = application.status === "approved";
+  return (
+    <li className="flex flex-col gap-3 rounded-xl border border-border bg-background p-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-1 text-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold text-foreground">{application.full_name}</span>
+          {application.nickname && (
+            <span className="text-muted-foreground">({application.nickname})</span>
+          )}
+          {isApproved && linkedAdmin && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-emerald-600">
+              <ShieldCheck className="size-3" />
+              {t("admin.adminAccountActive")}
+            </span>
+          )}
+        </div>
+        <div className="text-muted-foreground" dir="ltr">
+          {application.email}
+        </div>
+        {application.organization && (
+          <div className="text-muted-foreground">
+            {application.organization}
+            {application.position ? ` · ${application.position}` : ""}
+          </div>
+        )}
+        {application.reason && (
+          <p className="mt-1 max-w-2xl text-muted-foreground">{application.reason}</p>
+        )}
+        {application.website && (
+          <a
+            href={application.website}
+            target="_blank"
+            rel="noreferrer"
+            dir="ltr"
+            className="mt-1 text-xs text-primary hover:underline"
+          >
+            {application.website}
+          </a>
+        )}
+        <div className="mt-1 text-xs text-muted-foreground">
+          {new Date(application.created_at).toLocaleDateString()}
+        </div>
+      </div>
+      <ApplicationActions application={application} onReview={onReview} />
+    </li>
+  );
+}
+
+/** A staff account that was created or registered without ever applying. */
+function UnappliedCard({
+  user,
+  onReviewUnapplied,
+}: {
+  user: User;
+  onReviewUnapplied: (user: User, action: "approve" | "waitlist" | "reject") => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <li className="flex flex-col gap-3 rounded-xl border border-dashed border-border bg-background p-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-1 text-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold text-foreground">{user.full_name || user.email}</span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            {user.role}
+          </span>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">
+            {t("admin.noApplication")}
+          </span>
+        </div>
+        <div className="text-muted-foreground" dir="ltr">
+          {user.email}
+        </div>
+        <p className="text-xs text-muted-foreground">{t("admin.noApplicationHint")}</p>
+      </div>
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <Button size="sm" onClick={() => void onReviewUnapplied(user, "approve")}>
+          <Check className="size-3.5" />
+          {t("admin.approve")}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => void onReviewUnapplied(user, "waitlist")}
+        >
+          <Clock className="size-3.5" />
+          {t("admin.waitlist")}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-destructive hover:bg-destructive/10"
+          onClick={() => void onReviewUnapplied(user, "reject")}
+        >
+          <X className="size-3.5" />
+          {t("admin.reject")}
+        </Button>
+      </div>
+    </li>
+  );
+}
+
+/** Applications split by kind, so researchers and NGO admins are never mixed in
+ *  one list. Empty groups are dropped rather than shown as blanks. */
+function ApplicationGroups({
+  applications,
+  adminByUserId,
+  onReview,
+}: {
+  applications: AdminApplication[];
+  adminByUserId: Map<number, User>;
+  onReview: (application: AdminApplication, action: ReviewAction) => void;
+}) {
+  const { t } = useTranslation();
+  const groups = [
+    { key: "researcher" as const, label: t("admin.kindResearcher") },
+    { key: "ngo" as const, label: t("admin.kindNgo") },
+  ]
+    .map((group) => ({
+      ...group,
+      items: applications.filter((application) => applicationKind(application) === group.key),
+    }))
+    .filter((group) => group.items.length > 0);
+
+  if (groups.length === 0) {
+    return <p className="text-sm text-muted-foreground">{t("admin.applicationsEmpty")}</p>;
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-4",
+        groups.length > 1 && "lg:grid lg:grid-cols-2 lg:items-start lg:gap-6",
+      )}
+    >
+      {groups.map((group) => (
+        <div key={group.key} className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              {group.label}
+            </span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground">
+              {group.items.length}
+            </span>
+          </div>
+          <ul className="space-y-3">
+            {group.items.map((application) => (
+              <ApplicationCard
+                key={application.id}
+                application={application}
+                linkedAdmin={
+                  application.user_id != null ? adminByUserId.get(application.user_id) : undefined
+                }
+                onReview={onReview}
+              />
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -354,141 +576,6 @@ export function AdminDashboard() {
       toast.error(error instanceof Error ? error.message : t("admin.reviewError"));
     }
   };
-
-  const ApplicationActions = ({
-    application,
-  }: {
-    application: AdminApplication;
-  }) => {
-    const isWaitlisted = application.status === "waitlisted";
-    if (application.status === "approved") return null;
-    return (
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <Button size="sm" onClick={() => void review(application, "approve")}>
-          <Check className="size-3.5" />
-          {t("admin.approve")}
-        </Button>
-        {!isWaitlisted ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => void review(application, "waitlist")}
-          >
-            <Clock className="size-3.5" />
-            {t("admin.waitlist")}
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => void review(application, "pending")}
-          >
-            <RotateCcw className="size-3.5" />
-            {t("admin.moveToPending")}
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-destructive hover:bg-destructive/10"
-          onClick={() => void review(application, "reject")}
-        >
-          <X className="size-3.5" />
-          {t("admin.reject")}
-        </Button>
-      </div>
-    );
-  };
-
-  const ApplicationCard = ({ application }: { application: AdminApplication }) => {
-    const linkedAdmin =
-      application.user_id != null ? adminByUserId.get(application.user_id) : undefined;
-    const isApproved = application.status === "approved";
-    return (
-      <li className="flex flex-col gap-3 rounded-xl border border-border bg-background p-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex flex-col gap-1 text-sm">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-semibold text-foreground">{application.full_name}</span>
-            {application.nickname && (
-              <span className="text-muted-foreground">({application.nickname})</span>
-            )}
-            {isApproved && linkedAdmin && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-emerald-600">
-                <ShieldCheck className="size-3" />
-                {t("admin.adminAccountActive")}
-              </span>
-            )}
-          </div>
-          <div className="text-muted-foreground" dir="ltr">
-            {application.email}
-          </div>
-          {application.organization && (
-            <div className="text-muted-foreground">
-              {application.organization}
-              {application.position ? ` · ${application.position}` : ""}
-            </div>
-          )}
-          {application.reason && (
-            <p className="mt-1 max-w-2xl text-muted-foreground">{application.reason}</p>
-          )}
-          {application.website && (
-            <a
-              href={application.website}
-              target="_blank"
-              rel="noreferrer"
-              dir="ltr"
-              className="mt-1 text-xs text-primary hover:underline"
-            >
-              {application.website}
-            </a>
-          )}
-          <div className="mt-1 text-xs text-muted-foreground">
-            {new Date(application.created_at).toLocaleDateString()}
-          </div>
-        </div>
-        <ApplicationActions application={application} />
-      </li>
-    );
-  };
-
-  const UnappliedCard = ({ user }: { user: User }) => (
-    <li className="flex flex-col gap-3 rounded-xl border border-dashed border-border bg-background p-4 sm:flex-row sm:items-start sm:justify-between">
-      <div className="flex flex-col gap-1 text-sm">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-semibold text-foreground">{user.full_name || user.email}</span>
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {user.role}
-          </span>
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">
-            {t("admin.noApplication")}
-          </span>
-        </div>
-        <div className="text-muted-foreground" dir="ltr">
-          {user.email}
-        </div>
-        <p className="text-xs text-muted-foreground">{t("admin.noApplicationHint")}</p>
-      </div>
-      <div className="flex shrink-0 flex-wrap items-center gap-2">
-        <Button size="sm" onClick={() => void reviewUnapplied(user, "approve")}>
-          <Check className="size-3.5" />
-          {t("admin.approve")}
-        </Button>
-        <Button size="sm" variant="outline" onClick={() => void reviewUnapplied(user, "waitlist")}>
-          <Clock className="size-3.5" />
-          {t("admin.waitlist")}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-destructive hover:bg-destructive/10"
-          onClick={() => void reviewUnapplied(user, "reject")}
-        >
-          <X className="size-3.5" />
-          {t("admin.reject")}
-        </Button>
-      </div>
-    </li>
-  );
 
   const navLabels: Record<SectionKey, string> = {
     overview: t("admin.navOverview"),
@@ -669,14 +756,36 @@ export function AdminDashboard() {
                     {pending.length === 0 && unapplied.length === 0 ? (
                       <p className="text-sm text-muted-foreground">{t("admin.applicationsEmpty")}</p>
                     ) : (
-                      <ul className="space-y-3">
-                        {pending.map((application) => (
-                          <ApplicationCard key={application.id} application={application} />
-                        ))}
-                        {unapplied.map((user) => (
-                          <UnappliedCard key={user.id} user={user} />
-                        ))}
-                      </ul>
+                      <div className="flex flex-col gap-5">
+                        {pending.length > 0 && (
+                          <ApplicationGroups
+                            applications={pending}
+                            adminByUserId={adminByUserId}
+                            onReview={review}
+                          />
+                        )}
+                        {unapplied.length > 0 && (
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                {t("admin.groupUnapplied")}
+                              </span>
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold text-muted-foreground">
+                                {unapplied.length}
+                              </span>
+                            </div>
+                            <ul className="space-y-3">
+                              {unapplied.map((user) => (
+                                <UnappliedCard
+                                  key={user.id}
+                                  user={user}
+                                  onReviewUnapplied={reviewUnapplied}
+                                />
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -689,11 +798,11 @@ export function AdminDashboard() {
                       <CardDescription>{t("admin.approvedEmpty")}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <ul className="space-y-3">
-                        {approved.map((application) => (
-                          <ApplicationCard key={application.id} application={application} />
-                        ))}
-                      </ul>
+                      <ApplicationGroups
+                        applications={approved}
+                        adminByUserId={adminByUserId}
+                        onReview={review}
+                      />
                     </CardContent>
                   </Card>
                 )}
@@ -708,11 +817,11 @@ export function AdminDashboard() {
                     {waitlisted.length === 0 ? (
                       <p className="text-sm text-muted-foreground">{t("admin.waitlistedEmpty")}</p>
                     ) : (
-                      <ul className="space-y-3">
-                        {waitlisted.map((application) => (
-                          <ApplicationCard key={application.id} application={application} />
-                        ))}
-                      </ul>
+                      <ApplicationGroups
+                        applications={waitlisted}
+                        adminByUserId={adminByUserId}
+                        onReview={review}
+                      />
                     )}
                   </CardContent>
                 </Card>
@@ -727,11 +836,11 @@ export function AdminDashboard() {
                     {rejected.length === 0 ? (
                       <p className="text-sm text-muted-foreground">{t("admin.rejectedEmpty")}</p>
                     ) : (
-                      <ul className="space-y-3">
-                        {rejected.map((application) => (
-                          <ApplicationCard key={application.id} application={application} />
-                        ))}
-                      </ul>
+                      <ApplicationGroups
+                        applications={rejected}
+                        adminByUserId={adminByUserId}
+                        onReview={review}
+                      />
                     )}
                   </CardContent>
                 </Card>
