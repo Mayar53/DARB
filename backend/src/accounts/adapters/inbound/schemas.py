@@ -120,6 +120,14 @@ class RefreshIn(Schema):
     refresh_token: str
 
 
+class OrganizationOut(Schema):
+    id: int
+    name: str
+    website: str = ""
+    description: str = ""
+    created_at: datetime
+
+
 class UserOut(Schema):
     id: int
     email: EmailStr
@@ -132,6 +140,10 @@ class UserOut(Schema):
     permissions: list[str] = []
     points: int = 0
     badges: list[dict] = []
+    # Organizations/NGOs this account is assigned to (org admins). Empty for
+    # everyone else. Lets the dashboard and the account page show which NGO an
+    # admin belongs to.
+    organizations: list[OrganizationOut] = []
 
 
 class PublicProfileOut(Schema):
@@ -168,14 +180,6 @@ class AdminApplicationStatusOut(Schema):
 class PermissionOut(Schema):
     key: str
     label: str
-
-
-class OrganizationOut(Schema):
-    id: int
-    name: str
-    website: str = ""
-    description: str = ""
-    created_at: datetime
 
 
 class AdminLeaderboardEntryOut(Schema):

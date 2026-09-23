@@ -23,15 +23,6 @@ export interface Permission {
   label: string;
 }
 
-/** Mirrors the backend `OrganizationOut` ninja schema. */
-export interface Organization {
-  id: number;
-  name: string;
-  website: string;
-  description: string;
-  created_at: string;
-}
-
 /** Mirrors the backend `AdminLeaderboardEntryOut` ninja schema. */
 export interface AdminLeaderboardEntry {
   admin_id: number;
@@ -43,4 +34,4 @@ export interface AdminLeaderboardEntry {
   opportunities: { id: number; title: string }[];
 }
 
-export type { User } from "@/lib/types";
+export type { Organization, User } from "@/lib/types";

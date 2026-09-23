@@ -1,9 +1,9 @@
 "use client";
 
-import { Bookmark, CheckCircle, IdentificationCard, PencilSimple, ShieldCheck, Trophy } from "@phosphor-icons/react";
+import { Bookmark, Buildings, CheckCircle, IdentificationCard, PencilSimple, ShieldCheck, Trophy } from "@phosphor-icons/react";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { AnimatedHeading } from "@/components/shared/animated-heading";
@@ -25,6 +25,7 @@ import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 import { authApi } from "@/features/auth/api/auth.api";
+import { opportunitiesApi } from "@/features/opportunities/api/opportunities.api";
 
 /**
  * Emoji avatars — the Darb set: friendly animals, symbols and hobbies.
@@ -227,6 +228,95 @@ function NameEditor({ label, value }: { label: string; value: string }) {
   );
 }
 
+/**
+ * The NGO an org admin belongs to: its name, website and the opportunities the
+ * account has published. Renders nothing for anyone not linked to an
+ * organization.
+ */
+function OrganizationCard() {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const [opportunities, setOpportunities] = useState<{ id: number; title: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const org = user?.organizations?.[0];
+
+  useEffect(() => {
+    if (!org) return;
+    let cancelled = false;
+    opportunitiesApi
+      .listMine()
+      .then((rows) => {
+        if (!cancelled) setOpportunities(rows.map((o) => ({ id: o.id, title: o.title })));
+      })
+      .catch(() => {
+        if (!cancelled) setOpportunities([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [org]);
+
+  if (!org) return null;
+
+  return (
+    <Card className="max-w-lg">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Buildings size={22} weight="duotone" className="text-primary" />
+          {t("account.orgTitle")}
+        </CardTitle>
+        <CardDescription>{t("account.orgSubtitle")}</CardDescription>
+      </CardHeader>
+      <CardContent className="text-sm">
+        <Row label={t("account.orgName")} value={org.name} />
+        <div className="flex items-center justify-between gap-4 border-b py-2">
+          <span className="text-muted-foreground">{t("account.orgWebsite")}</span>
+          {org.website ? (
+            <a
+              href={org.website}
+              target="_blank"
+              rel="noreferrer"
+              dir="ltr"
+              className="font-medium text-primary hover:underline"
+            >
+              {org.website}
+            </a>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </div>
+        <div className="py-2">
+          <div className="text-muted-foreground">{t("account.orgOpportunities")}</div>
+          {loading ? (
+            <div className="mt-1 text-muted-foreground">…</div>
+          ) : opportunities.length === 0 ? (
+            <div className="mt-1 text-muted-foreground">
+              {t("account.orgOpportunitiesEmpty")}
+            </div>
+          ) : (
+            <ul className="mt-1 flex flex-col gap-1">
+              {opportunities.map((o) => (
+                <li key={o.id}>
+                  <Link
+                    href={`/opportunities/${o.id}`}
+                    className="font-medium text-foreground transition-colors hover:text-primary hover:underline"
+                  >
+                    {o.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 /** Post-login screen: the signed-in account with avatar picker. */
 export function AccountView() {
   const { user } = useAuth();
@@ -286,6 +376,8 @@ export function AccountView() {
           />
         </CardContent>
       </Card>
+
+      <OrganizationCard />
 
       <Card className="max-w-lg">
         <CardHeader>

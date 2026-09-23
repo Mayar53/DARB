@@ -630,6 +630,16 @@ def test_org_approval_makes_org_admin_and_creates_org(owner_tokens):
     assert user["role"] == "org_admin"
     assert user["is_staff"] is True
 
+    # ...and the API now carries the NGO it belongs to, so the dashboard and
+    # the account page can show it.
+    assert [o["name"] for o in user["organizations"]] == ["Example Youth NGO"]
+
+    # The same NGO comes back on the owner's admin listing.
+    admins = client.get("/api/auth/admins", headers=_h(owner_tokens)).json()
+    row = next(a for a in admins if a["email"] == "org3@example.com")
+    assert [o["name"] for o in row["organizations"]] == ["Example Youth NGO"]
+    assert row["organizations"][0]["website"] == ""
+
     # The organization was created and linked.
     from src.accounts.adapters.outbound.organization_models import Organization
     org = Organization.objects.get(name="Example Youth NGO")

@@ -26,6 +26,8 @@ class User(Entity):
     badges: list[dict] = field(default_factory=list)
     # Opaque hash produced by the PasswordHasher port; never the raw password.
     password_hash: str | None = None
+    # Organizations/NGOs this user is assigned to (org admins; owner manages).
+    organizations: list[Organization] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

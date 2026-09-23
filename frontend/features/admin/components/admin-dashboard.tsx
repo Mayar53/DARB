@@ -727,6 +727,7 @@ export function AdminDashboard() {
                 <AdminList
                   admins={admins}
                   permissions={permissions}
+                  leaderboard={leaderboard}
                   onChanged={refresh}
                 />
                 <Card>

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from src.accounts.adapters.outbound.orm_models import UserModel
-from src.accounts.domain.entities import User
+from src.accounts.domain.entities import Organization, User
 from src.accounts.domain.permissions import DEFAULT_ADMIN_PERMISSIONS
 from src.accounts.domain.ports import UserRepository
 
@@ -46,7 +46,9 @@ class DjangoUserRepository(UserRepository):
         return self._to_entity(row)
 
     def list_admins(self) -> list[User]:
-        rows = UserModel.objects.filter(is_staff=True)
+        # prefetch: _to_entity maps organizations, which would otherwise be one
+        # query per admin.
+        rows = UserModel.objects.filter(is_staff=True).prefetch_related("organizations")
         return [self._to_entity(row) for row in rows]
 
     def list_staff_without_application(self) -> list[User]:
@@ -56,14 +58,18 @@ class DjangoUserRepository(UserRepository):
         through the application flow. They surface to the OWNER as new
         applications so the owner can formally approve/decline/waitlist them.
         """
-        rows = UserModel.objects.filter(
-            is_staff=True,
-            admin_applications__isnull=True,
-        ).exclude(role=UserModel.Role.OWNER)
+        rows = (
+            UserModel.objects.filter(
+                is_staff=True,
+                admin_applications__isnull=True,
+            )
+            .exclude(role=UserModel.Role.OWNER)
+            .prefetch_related("organizations")
+        )
         return [self._to_entity(row) for row in rows]
 
     def list_users(self) -> list[User]:
-        rows = UserModel.objects.all().order_by("id")
+        rows = UserModel.objects.all().order_by("id").prefetch_related("organizations")
         return [self._to_entity(row) for row in rows]
 
     def update_profile(
@@ -155,4 +161,15 @@ class DjangoUserRepository(UserRepository):
             password_hash=row.password,
             created_at=row.date_joined,
             updated_at=row.updated_at,
+            organizations=[
+                Organization(
+                    id=org.pk,
+                    name=org.name,
+                    website=org.website,
+                    description=org.description,
+                    created_at=org.created_at,
+                    updated_at=org.updated_at,
+                )
+                for org in row.organizations.all()
+            ],
         )

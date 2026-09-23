@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Plus, Power } from "lucide-react";
+import { Building2, ChevronDown, Plus, Power } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -19,19 +19,25 @@ import type { User } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 import { adminApi } from "../api/admin.api";
-import type { Permission } from "../types";
+import type { AdminLeaderboardEntry, Permission } from "../types";
 
 /**
  * Admin accounts management: list, activate/deactivate, create directly, and
  * toggle each admin's permissions with checkboxes (no code editing needed).
+ *
+ * An admin who joined as an organization admin also shows the NGO they are
+ * linked to (name + website) and the opportunities they have published.
  */
 export function AdminList({
   admins,
   permissions,
+  leaderboard,
   onChanged,
 }: {
   admins: User[];
   permissions: Permission[];
+  /** Per-admin contribution counts + opportunity titles (from the dashboard). */
+  leaderboard: AdminLeaderboardEntry[];
   onChanged: () => void;
 }) {
   const { t } = useTranslation();
@@ -176,6 +182,9 @@ export function AdminList({
               const isOwner = admin.role === "owner";
               const isOpen = openId === admin.id;
               const currentPerms = draftPerms[admin.id] ?? admin.permissions;
+              const org = admin.organizations?.[0];
+              const published =
+                leaderboard.find((entry) => entry.admin_id === admin.id)?.opportunities ?? [];
               return (
                 <li
                   key={admin.id}
@@ -199,6 +208,37 @@ export function AdminList({
                       <div className="text-muted-foreground" dir="ltr">
                         {admin.email}
                       </div>
+                      {org && (
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary/25 px-2 py-0.5 font-semibold text-foreground">
+                            <Building2 className="size-3" />
+                            {org.name}
+                          </span>
+                          {org.website ? (
+                            <a
+                              href={org.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              dir="ltr"
+                              className="font-medium text-primary hover:underline"
+                            >
+                              {org.website}
+                            </a>
+                          ) : null}
+                        </div>
+                      )}
+                      {published.length > 0 && (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          <span className="font-semibold">
+                            {t("admin.adminOpportunities")}:
+                          </span>{" "}
+                          {published
+                            .slice(0, 4)
+                            .map((o) => o.title)
+                            .join(" · ")}
+                          {published.length > 4 ? ` +${published.length - 4}` : ""}
+                        </div>
+                      )}
                       {admin.permissions.length > 0 && (
                         <div className="mt-1 flex max-w-xl flex-wrap gap-1">
                           {admin.permissions.map((p) => (

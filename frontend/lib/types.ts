@@ -1,5 +1,14 @@
 /** Shared API contract types — mirror the backend django-ninja schemas. */
 
+/** Mirrors the backend `OrganizationOut` ninja schema. */
+export interface Organization {
+  id: number;
+  name: string;
+  website: string;
+  description: string;
+  created_at: string;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -8,12 +17,14 @@ export interface User {
   avatar: string;
   is_active: boolean;
   is_staff: boolean;
-  /** "user" | "admin" | "owner" — matches the backend role field. */
+  /** "user" | "admin" | "org_admin" | "researcher" | "owner" — backend role. */
   role: string;
   permissions: string[];
   /** Gamification — present on /auth/me, login, register. */
   points?: number;
   badges?: Badge[];
+  /** Organizations/NGOs this account is linked to (org admins only). */
+  organizations?: Organization[];
 }
 
 /** A gamification badge (server-computed from real activity). */
