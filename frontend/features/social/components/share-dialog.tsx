@@ -135,8 +135,13 @@ export function ShareDialog({ opportunity, open, onOpenChange }: ShareDialogProp
   const handleDownload = useCallback(async () => {
     if (!graphicRef.current) return;
     try {
-      await downloadPng(graphicRef.current, socialFileName(opportunity.id, formatKey));
-      toast.success(t("share.downloaded"));
+      const delivery = await downloadPng(
+        graphicRef.current,
+        socialFileName(opportunity.id, formatKey),
+      );
+      // The share sheet (phones) is its own confirmation; only a file download
+      // needs telling.
+      if (delivery === "downloaded") toast.success(t("share.downloaded"));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("share.failed"));
     }
