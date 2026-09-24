@@ -74,6 +74,7 @@ function ApplyFormBody({ user }: { user: ReturnType<typeof useAuth>["user"] }) {
   const [password, setPassword] = useState("");
   const [organization, setOrganization] = useState("");
   const [website, setWebsite] = useState("");
+  const [social, setSocial] = useState("");
   const [position, setPosition] = useState("");
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -130,6 +131,7 @@ function ApplyFormBody({ user }: { user: ReturnType<typeof useAuth>["user"] }) {
         full_name: fullName,
         organization,
         website,
+        social,
         position,
         reason,
         request_type: requestType,
@@ -297,6 +299,18 @@ function ApplyFormBody({ user }: { user: ReturnType<typeof useAuth>["user"] }) {
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="apply-social">{t("adminApply.social")}</Label>
+            <Input
+              id="apply-social"
+              dir="ltr"
+              maxLength={255}
+              placeholder={t("adminApply.socialOptional")}
+              value={social}
+              onChange={(e) => setSocial(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">{t("adminApply.socialHint")}</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="apply-reason">{t("adminApply.reason")}</Label>

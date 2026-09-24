@@ -27,6 +27,8 @@ class AdminApplication(models.Model):
     full_name = models.CharField(max_length=255)
     organization = models.CharField(max_length=255, blank=True)
     website = models.URLField(max_length=500, blank=True)
+    # Optional free-text Telegram / social-media handle or profile link.
+    social = models.CharField(max_length=255, blank=True)
     position = models.CharField(max_length=255, blank=True)
     reason = models.TextField(blank=True)
     # Which kind of admin access is being requested (see RequestType).

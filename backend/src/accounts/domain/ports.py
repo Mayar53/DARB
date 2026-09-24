@@ -100,6 +100,7 @@ class AdminApplicationRepository(ABC):
         full_name: str,
         organization: str = "",
         website: str = "",
+        social: str = "",
         position: str = "",
         reason: str = "",
         user_id: int | None = None,

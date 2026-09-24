@@ -34,6 +34,7 @@ class AdminApplication(Entity):
     full_name: str
     organization: str = ""
     website: str = ""
+    social: str = ""
     position: str = ""
     reason: str = ""
     # "admin" (researcher) or "org" (organization admin) — what is requested.

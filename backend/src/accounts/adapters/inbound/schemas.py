@@ -48,6 +48,7 @@ class AdminApplyIn(Schema):
     full_name: str = Field(default="", max_length=255)
     organization: str = Field(default="", max_length=255)
     website: str = Field(default="", max_length=500)
+    social: str = Field(default="", max_length=255)
     position: str = Field(default="", max_length=255)
     # Required: the applicant must say why they want to join (10-100 words).
     reason: str = Field(max_length=2000)
@@ -85,6 +86,7 @@ class AdminRegisterIn(Schema):
     nickname: str = Field(default="", max_length=64)
     organization: str = Field(default="", max_length=255)
     website: str = Field(default="", max_length=500)
+    social: str = Field(default="", max_length=255)
     request_type: str = Field(default="admin", max_length=16)
 
     @field_validator("website")
@@ -164,6 +166,7 @@ class AdminApplicationOut(Schema):
     nickname: str = ""
     organization: str = ""
     website: str = ""
+    social: str = ""
     position: str = ""
     reason: str = ""
     request_type: str = "admin"

@@ -301,6 +301,11 @@ function ApplicationCard({
             {application.website}
           </a>
         )}
+        {application.social && (
+          <div className="mt-1 text-xs text-muted-foreground" dir="ltr">
+            {application.social}
+          </div>
+        )}
         <div className="mt-1 text-xs text-muted-foreground">
           {new Date(application.created_at).toLocaleDateString()}
         </div>

@@ -71,6 +71,7 @@ class AdminApplyCommand:
     full_name: str
     organization: str = ""
     website: str = ""
+    social: str = ""
     position: str = ""
     reason: str = ""
     user_id: int | None = None
@@ -94,6 +95,7 @@ class AdminRegisterCommand:
     nickname: str = ""
     organization: str = ""
     website: str = ""
+    social: str = ""
     request_type: str = "admin"  # "admin" (researcher) | "org" (organization admin)
 
 
@@ -195,6 +197,7 @@ class ApplyForAdmin(UseCase[AdminApplyCommand, AdminApplication]):
             full_name=(data.full_name or user.full_name).strip(),
             organization=data.organization,
             website=data.website,
+            social=data.social,
             position=data.position,
             reason=data.reason,
             user_id=user.id,
@@ -245,6 +248,7 @@ class RegisterAdminApplication(UseCase[AdminRegisterCommand, AdminApplication]):
             full_name=(data.full_name or user.full_name).strip(),
             organization=data.organization,
             website=data.website,
+            social=data.social,
             user_id=user.id,
             request_type=data.request_type,
         )

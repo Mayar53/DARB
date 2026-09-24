@@ -63,9 +63,9 @@ class AdminApplicationAdmin(ModelAdmin):
         "created_at",
     )
     list_filter = ("status",)
-    search_fields = ("email", "full_name", "organization")
+    search_fields = ("email", "full_name", "organization", "social")
     ordering = ("-created_at",)
-    readonly_fields = ("email", "full_name", "organization", "reason", "created_at", "updated_at")
+    readonly_fields = ("email", "full_name", "organization", "website", "social", "reason", "created_at", "updated_at")
 
 
 @admin.register(Organization)

@@ -6,6 +6,7 @@ export interface AdminApplication {
   nickname: string;
   organization: string;
   website: string;
+  social: string;
   position: string;
   reason: string;
   /** "admin" (researcher) | "org" (organization admin) */

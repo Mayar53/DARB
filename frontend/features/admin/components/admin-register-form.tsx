@@ -36,6 +36,7 @@ export function AdminRegisterForm() {
   const [password, setPassword] = useState("");
   const [organization, setOrganization] = useState("");
   const [website, setWebsite] = useState("");
+  const [social, setSocial] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<AdminApplication | null>(null);
 
@@ -55,6 +56,7 @@ export function AdminRegisterForm() {
         nickname,
         organization,
         website,
+        social,
         request_type: requestType,
       });
       setSubmitted(app);
@@ -188,6 +190,18 @@ export function AdminRegisterForm() {
               value={website}
               onChange={(e) => setWebsite(e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="reg-social">{t("adminApply.social")}</Label>
+            <Input
+              id="reg-social"
+              dir="ltr"
+              maxLength={255}
+              placeholder={t("adminApply.socialOptional")}
+              value={social}
+              onChange={(e) => setSocial(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">{t("adminApply.socialHint")}</p>
           </div>
 
           <p className="text-xs text-muted-foreground">{t("adminRegister.pendingHint")}</p>

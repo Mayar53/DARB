@@ -249,7 +249,6 @@ const en = {
   "home.contactEmail": "Email",
 
   "home.footerTagline": "Every opportunity, one place.",
-  "home.footerRights": "All rights reserved.",
 
   // ---- Profile / points ----
   "profile.points": "{n} points",
@@ -544,6 +543,9 @@ const en = {
   "adminApply.position": "Position (optional)",
   "adminApply.website": "Website",
   "adminApply.websiteOptional": "Optional — leave empty if you have none",
+  "adminApply.social": "Telegram / social media",
+  "adminApply.socialOptional": "Optional — e.g. @username or a profile link",
+  "adminApply.socialHint": "Telegram is preferred.",
   "adminApply.reason": "Why do you want to join?",
   "adminApply.reasonHint": "Required — between 10 and 100 words",
   "adminApply.reasonTooShort": "Please write at least 10 words.",
@@ -845,7 +847,6 @@ const ar: Record<MessageKey, string> = {
   "home.contactEmail": "البريد الإلكتروني",
 
   "home.footerTagline": "كل فرصة، في مكان واحد.",
-  "home.footerRights": "جميع الحقوق محفوظة.",
 
   // ---- الملف الشخصي / النقاط ----
   "profile.points": "{n} نقطة",
@@ -1140,6 +1141,9 @@ const ar: Record<MessageKey, string> = {
   "adminApply.position": "المنصب (اختياري)",
   "adminApply.website": "الموقع الإلكتروني",
   "adminApply.websiteOptional": "اختياري — اتركه فارغاً إذا لم يكن لديك",
+  "adminApply.social": "تلغرام / وسائل التواصل",
+  "adminApply.socialOptional": "اختياري — مثال: @username أو رابط الحساب",
+  "adminApply.socialHint": "يفضّل استخدام تلغرام.",
   "adminApply.reason": "لماذا تريد الانضمام؟",
   "adminApply.reasonHint": "مطلوب — بين 10 و100 كلمة",
   "adminApply.reasonTooShort": "يرجى كتابة 10 كلمات على الأقل.",

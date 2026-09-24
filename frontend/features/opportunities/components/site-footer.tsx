@@ -81,7 +81,7 @@ export function SiteFooter() {
             {APP_NAME}
           </h4>
           <p className="mt-3 text-sm text-primary-foreground/70">
-            © {year} {APP_NAME}. {t("home.footerRights")}
+            © {year} {APP_NAME}.
           </p>
         </div>
       </div>

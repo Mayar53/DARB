@@ -22,6 +22,7 @@ export const applyApi = {
     full_name: string;
     organization?: string;
     website?: string;
+    social?: string;
     position?: string;
     reason?: string;
     request_type?: "admin" | "org";
@@ -34,6 +35,7 @@ export const applyApi = {
     nickname: string;
     organization: string;
     website?: string;
+    social?: string;
     request_type?: "admin" | "org";
   }) => api.post<AdminApplication>("/auth/admin-register", data, { auth: false }),
   /** The signed-in user's own application (or null if they have none). */
